@@ -133,7 +133,7 @@ public class TextureAtlas
     /// <returns>The texture atlas created by this method.</returns>
     public static TextureAtlas FromFile(ContentManager content, string fileName)
     {
-        TextureAtlas atlas = new TextureAtlas();
+        TextureAtlas atlas = new();
 
         string filePath = Path.Combine(content.RootDirectory, fileName);
 

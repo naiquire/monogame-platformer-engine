@@ -11,9 +11,9 @@ namespace platformer_engine;
 public class PlatformerEngine : Core
 {
     private Player _player;
-    public static Rectangle ScreenBounds { get; private set; }
+    public static HitboxView HitboxViewer;
 
-    public PlatformerEngine() : base("Dungeon Slime", 1280, 720, false)
+    public PlatformerEngine() : base("PlatformerEngine", 1280, 720, false)
     {
 
     }
@@ -28,6 +28,10 @@ public class PlatformerEngine : Core
 
     protected override void LoadContent()
     {
+        base.LoadContent();
+
+        HitboxViewer = new(GraphicsDevice);
+
         // Create the texture atlas from the XML configuration file.
         TextureAtlas atlas = TextureAtlas.FromFile(Content, "Images/TextureAtlas.xml");
 
@@ -37,12 +41,6 @@ public class PlatformerEngine : Core
 
     protected override void Update(GameTime gameTime)
     {
-        ScreenBounds = new Rectangle(0, 0, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight);
-
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-            Exit();
-
-        // Update the slime animated sprite.
         _player.Update(gameTime);
 
         base.Update(gameTime);
@@ -56,8 +54,10 @@ public class PlatformerEngine : Core
         // Begin the sprite batch to prepare for rendering.
         SpriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-        // Draw the bat sprite 10px to the right of the slime.
-        _player.Texture.Draw(SpriteBatch, _player.GetPosition());
+        // draw bat texture and hitbox
+        _player.Texture.Draw(SpriteBatch, _player.GetSpritePosition());
+        HitboxViewer.DrawHitbox(SpriteBatch, _player.Hitbox);
+        HitboxViewer.DrawPoint(SpriteBatch, _player.Position);
 
         // Always end the sprite batch when finished.
         SpriteBatch.End();

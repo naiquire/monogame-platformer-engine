@@ -2,6 +2,8 @@ using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using lib.Input;
 
 namespace lib;
 
@@ -25,6 +27,11 @@ public class Core : Game
     public static new GraphicsDevice GraphicsDevice { get; private set; }
 
     /// <summary>
+    /// Gets a Rectangle which represents the bounds of the window.
+    /// </summary>
+    public static Rectangle ScreenBounds {get; private set; }
+
+    /// <summary>
     /// Gets the sprite batch used for all 2D rendering.
     /// </summary>
     public static SpriteBatch SpriteBatch { get; private set; }
@@ -33,6 +40,16 @@ public class Core : Game
     /// Gets the content manager used to load global assets.
     /// </summary>
     public static new ContentManager Content { get; private set; }
+
+    /// <summary>
+    /// Gets a reference to the input management system.
+    /// </summary>
+    public static InputManager Input { get; private set; }
+
+    /// <summary>
+    /// Gets or Sets a value that indicates if the game should exit when the esc key on the keyboard is pressed.
+    /// </summary>
+    public static bool ExitOnEscape { get; set; }
 
     /// <summary>
     /// Creates a new Core instance.
@@ -76,17 +93,42 @@ public class Core : Game
 
         // Mouse is visible by default.
         IsMouseVisible = true;
+
+        // Exit on escape is true by default
+        ExitOnEscape = true;
     }
 
     protected override void Initialize()
     {
-        base.Initialize();
-
         // Set the core's graphics device to a reference of the base Game's
         // graphics device.
         GraphicsDevice = base.GraphicsDevice;
 
         // Create the sprite batch instance.
         SpriteBatch = new SpriteBatch(GraphicsDevice);
+
+        // Create a new input manager.
+        Input = new InputManager();
+
+        base.Initialize();
+    }
+
+    protected override void LoadContent()
+    {
+        ScreenBounds = new Rectangle(0, 0, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight);
+        base.LoadContent();
+    }
+
+    protected override void Update(GameTime gameTime)
+    {
+        // Update the input manager.
+        Input.Update(gameTime);
+
+        if (ExitOnEscape && Input.Keyboard.WasKeyJustPressed(Keys.Escape))
+        {
+            Exit();
+        }
+
+        base.Update(gameTime);
     }
 }

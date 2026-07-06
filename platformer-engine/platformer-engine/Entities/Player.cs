@@ -3,33 +3,33 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using lib.Graphics;
 using lib.Graphics.Sprites;
+using lib.Structures;
 using platformer_engine;
-using System.ComponentModel;
+using lib;
+using lib.Input;
 
 namespace Entities;
 
-struct State
-{
-    public Vector2 Position { get; set; }
-    public Vector2 Velocity { get; set; }
-    public Rectangle Hitbox { get; set; }
-}
 class Player
 {
-    public AnimatedSprite Texture { get; private set; }
-    private State PlayerState;
-    
-    public Vector2 GetPosition() => PlayerState.Position;
-    public Vector2 GetVelocity() => PlayerState.Velocity;
+    private readonly Vector2 _hitboxSize = new(60, 60);
+    private Vector2 _spriteOffset;
+
+    public Sprite Texture { get; private set; }
+    public Vector2 Position { get; private set; } // bottom center
+    public Rectangle Hitbox { get; private set; }
+    public Vector2 Velocity { get; private set; }
+
     public Player()
     {
-        PlayerState = new()
-        {
-            Position = new Vector2(100, 100),
-            Velocity = Vector2.Zero
-        };
+        Position = new(100, 100);
+        UpdateHitbox();
     }
 
+    public void LoadContent(Sprite texture)
+    {
+        Texture = texture;
+    }
     public void LoadContent(AnimatedSprite texture)
     {
         Texture = texture;
@@ -38,26 +38,19 @@ class Player
     public void Update(GameTime gameTime)
     {
         KeyboardState keyboardState = Keyboard.GetState();
-        State currentState = PlayerState;
+        Vector2 currentPosition = Position;
 
         UpdatePosition(keyboardState);
         UpdateHitbox();
-        Texture.Update(gameTime);
 
-        if (PlayerOutOfBounds())
+        if (!Core.ScreenBounds.Contains(Hitbox))
         {
-            PlayerState = currentState;
-            PlayerState.Velocity = Vector2.Zero;
-        }        
-    }
+            Position = currentPosition;
+            UpdateHitbox();
+            Velocity = Vector2.Zero;
+        }
 
-    private bool PlayerOutOfBounds()
-    {
-        return PlayerState.Hitbox.Left <= PlatformerEngine.ScreenBounds.Left ||
-            PlayerState.Hitbox.Right >= PlatformerEngine.ScreenBounds.Right ||
-            PlayerState.Hitbox.Top <= PlatformerEngine.ScreenBounds.Top ||
-            PlayerState.Hitbox.Bottom >= PlatformerEngine.ScreenBounds.Bottom;
-
+        Texture.Update(gameTime);    
     }
 
     private void UpdatePosition(KeyboardState keyboardState)
@@ -65,7 +58,7 @@ class Player
         Vector2 acceleration = Vector2.Zero;
         const float accelerationFactor = 1.0f;
 
-        if (keyboardState.IsKeyDown(Keys.Right))
+        if (Core.Input.Keyboard.IsKeyDown(Keys.Right))
         {
             acceleration.X += accelerationFactor;
         }
@@ -82,11 +75,24 @@ class Player
             acceleration.Y += accelerationFactor;
         }
 
-        PlayerState.Velocity += acceleration;
-        PlayerState.Position += PlayerState.Velocity;
+        Velocity += acceleration;
+        Position += Velocity;
     }
     private void UpdateHitbox()
     {
-        PlayerState.Hitbox = new Rectangle((int)GetPosition().X, (int)GetPosition().Y, (int)Texture.Width, (int)Texture.Height);
+        Hitbox = new(
+            (int) (Position.X - _hitboxSize.X * 0.5f),
+            (int) (Position.Y - _hitboxSize.Y),
+            (int) _hitboxSize.X,
+            (int) _hitboxSize.Y
+        );
+    }
+
+    public Vector2 GetSpritePosition()
+    {
+        return new Vector2(
+            Position.X - Texture.Width * 0.5f,
+            Position.Y - Texture.Height
+        );
     }
 }
