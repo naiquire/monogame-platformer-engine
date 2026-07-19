@@ -7,18 +7,10 @@ using lib.Structures;
 using platformer_engine;
 using lib;
 using lib.Input;
-using MonoGame.Framework.Devices.Sensors;
-using System.Runtime.CompilerServices;
+using lib.Entities;
 
 namespace Entities;
 
-public enum Direction
-{
-    Left,
-    Right,
-    Up,
-    Down
-}
 public enum State
 {
     Normal,
@@ -34,141 +26,205 @@ public record PlayerState
     public bool CanDash;
 }
 
-class Player
+public record Cheats
 {
-    private readonly Vector2 _hitboxSize = new(60, 60);
-    public Rectangle Hitbox { get; private set; }
+    public bool Noclip;
+    public bool InfiniteJump;
+    public bool InfiniteDash;
+}
 
-    public Sprite Texture { get; private set; }
-    public Vector2 Position; // bottom center
-    private Vector2 _velocity;
-    private readonly Vector2 _acceleration;
+class Player : Entity
+{
+    private readonly PlayerState _playerState;
+    private readonly Cheats _cheats;
+    private readonly Vector2 _gravity;
 
-    private PlayerState _playerState;
-
-    public Player()
+    public Player() : base(new Vector2(200, 200))
     {
         _playerState = new()
         {
             State = State.Normal,
-            DirectionFacing = Direction.Right
+            DirectionFacing = Direction.Right,
+            IsAirborne = true,
+            CanDash = true
+        };
+        _cheats = new()
+        {
+            Noclip = false,
+            InfiniteJump = false,
+            InfiniteDash = true
         };
 
-        Position = new(200, 200);
-        _velocity = Vector2.Zero;
-        _acceleration = new(0, 0.5f);
+        _gravity = new(0, 0.5f);
 
-        UpdateHitbox();
+        GenerateHitbox(30, 60, Alignment.BottomMiddle);
     }
 
-    public void LoadContent(Sprite texture)
+    public override void Update(GameTime gameTime)
     {
-        Texture = texture;
-    }
+        
 
-    public void Update(GameTime gameTime, Rectangle roomBounds)
-    {
-        Vector2 currentPosition = Position;
+        CheckKeystrokes();
 
         switch (_playerState.State)
         {
             case State.Normal:
-                UpdatePosition();
+                Vector2 previousPosition = Position;
+                Rectangle previousHitbox = GetHitbox();
+
+                UpdateXVelocity();
+                Position.X += Velocity.X;
+                UpdateHitbox();
+
+                if (AABB(previousHitbox, GetHitbox(), PlatformerEngine._roomBounds))
+                {
+                    if (Velocity.X > 0)
+                    {
+                        float distance = Hitbox.Hitbox.Right - PlatformerEngine._roomBounds.Left;
+                        Position.X -= distance;
+                    }
+                    if (Velocity.X < 0)
+                    {
+                        float distance = PlatformerEngine._roomBounds.Right - Hitbox.Hitbox.Left;
+                        Position.X += distance;
+                    }
+
+                    Velocity.X = 0;
+                    UpdateHitbox();
+                }
+
+                previousPosition = Position;
+                previousHitbox = GetHitbox();
+
+                UpdateYVelocity();
+                Position.Y += Velocity.Y;
+                UpdateHitbox();
+
+                if (AABB(previousHitbox, GetHitbox(), PlatformerEngine._roomBounds))
+                {
+                    if (Velocity.Y > 0)
+                    {
+                        float distance = Hitbox.Hitbox.Bottom - PlatformerEngine._roomBounds.Top;
+                        Position.Y -= distance;
+
+                        _playerState.IsAirborne = false;
+                    }
+                    if (Velocity.Y < 0)
+                    {
+                        float distance = PlatformerEngine._roomBounds.Bottom - Hitbox.Hitbox.Top;
+                        Position.Y += distance;
+                    }
+
+                    Velocity.Y = 0;
+                    UpdateHitbox();
+                }
+                else
+                {
+                    // falling off ledge (broken)
+                    // _playerState.IsAirborne = true;
+                }
+
                 break;
             case State.Dashing:
                 UpdateDash(gameTime);
+                Position += Velocity;
+                UpdateHitbox();
                 break;
             default:
                 break;
         }
 
-        Position += _velocity;
-        UpdateHitbox();
-
-        HandleRoomCollision(currentPosition, roomBounds);
-
-        Texture?.Update(gameTime);
+        base.Update(gameTime);
     }
 
-    private void HandleRoomCollision(Vector2 currentPosition, Rectangle roomBounds)
-    {
-        if (Hitbox.Left <= roomBounds.Left)
-        {
-            _velocity.X = 0;
-            if (_velocity.Y > 0) _velocity.Y = 0;
-            Position.X = currentPosition.X;
-            UpdateHitbox();
-        }
-        if (Hitbox.Right >= roomBounds.Right)
-        {
-            _velocity.X = 0;
-            if (_velocity.Y > 0) _velocity.Y = 0;
-            Position.X = currentPosition.X;
-            UpdateHitbox();
-        }
+    // private void HandleRoomCollision(Vector2 currentPosition)
+    // {
+    //     Rectangle roomBounds = new Rectangle();
 
-        if (Hitbox.Top <= roomBounds.Top)
-        {
-            _velocity.Y = 0;
-            Position.Y = currentPosition.Y;
-            UpdateHitbox();
-        }
-        if (Hitbox.Bottom >= roomBounds.Bottom)
-        {
-            _velocity.Y = 0;
-            Position.Y = currentPosition.Y;
-            UpdateHitbox();
-            _playerState.IsAirborne = false;
-            _playerState.CanDash = true;
-        }
-    }
+    //     if (Hitbox.Left <= roomBounds.Left)
+    //     {
+    //         Velocity.X = 0;
+    //         if (Velocity.Y > 0) Velocity.Y = 0;
+    //         Position.X = currentPosition.X;
+    //         UpdateHitbox();
+    //     }
+    //     if (Hitbox.Right >= roomBounds.Right)
+    //     {
+    //         Velocity.X = 0;
+    //         if (Velocity.Y > 0) Velocity.Y = 0;
+    //         Position.X = currentPosition.X;
+    //         UpdateHitbox();
+    //     }
 
-    private void UpdatePosition()
+    //     if (Hitbox.Top <= roomBounds.Top)
+    //     {
+    //         Velocity.Y = 0;
+    //         Position.Y = currentPosition.Y;
+    //         UpdateHitbox();
+    //     }
+    //     if (Hitbox.Bottom >= roomBounds.Bottom)
+    //     {
+    //         Velocity.Y = 0;
+    //         Position.Y = currentPosition.Y;
+    //         UpdateHitbox();
+    //         _playerState.IsAirborne = false;
+    //         _playerState.CanDash = true;
+    //     }
+    // }
+
+    private void UpdateXVelocity()
     {
         const float x_speed = 10;
-        const float y_speed = 10;
-
 
         // horizontal movement
         bool leftKeyPressed = Core.Input.Keyboard.IsKeyDown(Keys.Left);
         bool rightKeyPressed = Core.Input.Keyboard.IsKeyDown(Keys.Right);
         if (leftKeyPressed && !rightKeyPressed)
         {
-            _velocity.X = -x_speed;
+            Velocity.X = -x_speed;
             _playerState.DirectionFacing = Direction.Left;
         }
         else if (!leftKeyPressed && rightKeyPressed)
         {
-            _velocity.X = x_speed;
+            Velocity.X = x_speed;
             _playerState.DirectionFacing = Direction.Right;
         }
         else
         {
-            _velocity.X = 0;
+            Velocity.X = 0;
         }
-
+    }
+    private void CheckKeystrokes()
+    {
         // dashing
         if (Core.Input.Keyboard.WasKeyJustPressed(Keys.C))
         {
-            if (_playerState.CanDash) Dash();
-            _playerState.CanDash = false;
+            if (_playerState.CanDash || _cheats.InfiniteDash)
+            {
+                Dash();
+                _playerState.CanDash = false;
+            }
         }
+    }
+    private void UpdateYVelocity()
+    {
+        const float y_speed = 10;
 
         // jumping
         if (Core.Input.Keyboard.WasKeyJustPressed(Keys.Z))
         {
-            if (!_playerState.IsAirborne)
+            if (!_playerState.IsAirborne || _cheats.InfiniteJump)
             {
-                _velocity.Y = -y_speed;
+                Velocity.Y = -y_speed;
                 _playerState.IsAirborne = true;
             }
         }
 
         // handle gravity
-        _velocity += _acceleration;
-        if (_velocity.Y < -10)
+        Velocity += _gravity;
+        if (Velocity.Y > 20)
         {
-            _velocity.Y = -10;
+            Velocity.Y = 20;
         }
     }
     
@@ -181,14 +237,14 @@ class Player
     {
         const float dashSpeed = 50f;
 
-        _velocity.Y = 0;
+        Velocity.Y = 0;
         if (_playerState.DirectionFacing == Direction.Left)
         {
-            _velocity.X = -dashSpeed;
+            Velocity.X = -dashSpeed;
         }
         if (_playerState.DirectionFacing == Direction.Right)
         {
-            _velocity.X = dashSpeed;
+            Velocity.X = dashSpeed;
         }
         
         _playerState.DashTimeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
@@ -197,27 +253,16 @@ class Player
         {
             _playerState.State = State.Normal;
             _playerState.DashTimeRemaining = -1;
+            _playerState.CanDash = true;
         }
     }
 
 
-
-
-    private void UpdateHitbox()
+    public bool AABB(Rectangle currentHitbox, Rectangle newHitbox, Rectangle obj)
     {
-        Hitbox = new(
-            (int) (Position.X - _hitboxSize.X * 0.5f),
-            (int) (Position.Y - _hitboxSize.Y),
-            (int) _hitboxSize.X,
-            (int) _hitboxSize.Y
-        );
-    }
+        if (_cheats.Noclip) return false;
 
-    public Vector2 GetSpritePosition()
-    {
-        return new Vector2(
-            Position.X - Texture.Width * 0.5f,
-            Position.Y - Texture.Height
-        );
+        Rectangle union = Rectangle.Union(currentHitbox, newHitbox);
+        return obj.Intersects(union);
     }
 }

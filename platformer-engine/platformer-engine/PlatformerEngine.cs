@@ -11,7 +11,7 @@ namespace platformer_engine;
 public class PlatformerEngine : Core
 {
     private Player _player;
-    private Rectangle _roomBounds;
+    public static Rectangle _roomBounds;
     private Tilemap _tilemap;
     public static HitboxViewer HitboxView;
 
@@ -32,7 +32,7 @@ public class PlatformerEngine : Core
         base.LoadContent();
 
         HitboxView = new HitboxViewer(GraphicsDevice);
-        _roomBounds = new Rectangle(50, 50, ScreenBounds.Width - 100, ScreenBounds.Height - 100);
+        _roomBounds = new Rectangle(100, 650, 1000, 50);
 
         // Create the texture atlas from the XML configuration file.
         // TextureAtlas atlas = TextureAtlas.FromFile(Content, "Images/TextureAtlas.xml");
@@ -47,7 +47,7 @@ public class PlatformerEngine : Core
 
     protected override void Update(GameTime gameTime)
     {
-        _player.Update(gameTime, _roomBounds);
+        _player.Update(gameTime);
 
         base.Update(gameTime);
     }
@@ -65,7 +65,7 @@ public class PlatformerEngine : Core
 
         // draw bat texture and hitbox
         // _player.Texture.Draw(SpriteBatch, _player.GetSpritePosition());
-        HitboxView.DrawHitbox(SpriteBatch, _player.Hitbox);
+        HitboxView.DrawHitbox(SpriteBatch, _player.GetHitbox());
         HitboxView.DrawPoint(SpriteBatch, _player.Position);
 
         HitboxView.DrawHitbox(SpriteBatch, _roomBounds);
