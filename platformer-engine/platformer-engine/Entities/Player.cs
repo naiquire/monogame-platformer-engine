@@ -76,16 +76,16 @@ class Player : Entity
                 Position.X += Velocity.X;
                 UpdateHitbox();
 
-                if (AABB(previousHitbox, GetHitbox(), PlatformerEngine._roomBounds))
+                if (AABB(previousHitbox, GetHitbox(), LevelScene._roomBounds))
                 {
                     if (Velocity.X > 0)
                     {
-                        float distance = Hitbox.Hitbox.Right - PlatformerEngine._roomBounds.Left;
+                        float distance = Hitbox.Hitbox.Right - LevelScene._roomBounds.Left;
                         Position.X -= distance;
                     }
                     if (Velocity.X < 0)
                     {
-                        float distance = PlatformerEngine._roomBounds.Right - Hitbox.Hitbox.Left;
+                        float distance = LevelScene._roomBounds.Right - Hitbox.Hitbox.Left;
                         Position.X += distance;
                     }
 
@@ -100,18 +100,18 @@ class Player : Entity
                 Position.Y += Velocity.Y;
                 UpdateHitbox();
 
-                if (AABB(previousHitbox, GetHitbox(), PlatformerEngine._roomBounds))
+                if (AABB(previousHitbox, GetHitbox(), LevelScene._roomBounds))
                 {
                     if (Velocity.Y > 0)
                     {
-                        float distance = Hitbox.Hitbox.Bottom - PlatformerEngine._roomBounds.Top;
+                        float distance = Hitbox.Hitbox.Bottom - LevelScene._roomBounds.Top;
                         Position.Y -= distance;
 
                         _playerState.IsAirborne = false;
                     }
                     if (Velocity.Y < 0)
                     {
-                        float distance = PlatformerEngine._roomBounds.Bottom - Hitbox.Hitbox.Top;
+                        float distance = LevelScene._roomBounds.Bottom - Hitbox.Hitbox.Top;
                         Position.Y += distance;
                     }
 

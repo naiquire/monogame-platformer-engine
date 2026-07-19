@@ -1,2 +1,2 @@
-﻿using var game = new platformer_engine.PlatformerEngine();
+﻿using var game = new PlatformerEngine();
 game.Run();
