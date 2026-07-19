@@ -216,7 +216,7 @@ public class TextureAtlas
                             }
                         }
 
-                        Animation animation = new Animation(frames, delay);
+                        Animation animation = new(frames, delay);
                         atlas.AddAnimation(name, animation);
                     }
                 }

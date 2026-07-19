@@ -28,3 +28,8 @@
 #begin Images/TextureAtlas.xml
 /copy:Images/TextureAtlas.xml
 
+#begin Images/TilemapDefinition.xml
+/importer:XmlImporter
+/processor:PassThroughProcessor
+/build:Images/TilemapDefinition.xml
+

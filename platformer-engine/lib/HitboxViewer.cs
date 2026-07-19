@@ -4,11 +4,11 @@ using lib.Structures;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-public class HitboxView
+public class HitboxViewer
 {
     private readonly Texture2D _pixel;
 
-    public HitboxView(GraphicsDevice graphicsDevice)
+    public HitboxViewer(GraphicsDevice graphicsDevice)
     {
         _pixel = new(graphicsDevice, 1, 1);
         _pixel.SetData([Color.White]);

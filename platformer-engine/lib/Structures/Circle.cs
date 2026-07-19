@@ -25,7 +25,7 @@ public readonly struct Circle : IEquatable<Circle>
     /// <summary>
     /// Gets the location of the center of this circle.
     /// </summary>
-    public readonly Point Location => new Point(X, Y);
+    public readonly Point Location => new(X, Y);
 
     /// <summary>
     /// Gets a circle with X=0, Y=0, and Radius=0.
