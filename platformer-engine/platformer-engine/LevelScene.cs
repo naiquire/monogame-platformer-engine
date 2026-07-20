@@ -4,13 +4,13 @@ using lib;
 using lib.Graphics.Tilemaps;
 using lib.Scenes;
 using Entities;
+using lib.Entities;
 
 namespace platformer_engine;
 
 public class LevelScene : Scene
 {
     private Player _player;
-    public static Rectangle _roomBounds;
     private Tilemap _tilemap;
     public static HitboxViewer HitboxView;
 
@@ -24,7 +24,11 @@ public class LevelScene : Scene
     public override void LoadContent()
     {
         HitboxView = new HitboxViewer(Core.GraphicsDevice);
-        _roomBounds = new Rectangle(100, 650, 1000, 50);
+
+        LevelObject floor = new(new Vector2(100, 650));
+        floor.GenerateHitbox(1000, 50);
+
+        LevelObjects.Add(floor);
 
         // Create the texture atlas from the XML configuration file.
         // TextureAtlas atlas = TextureAtlas.FromFile(Content, "Images/TextureAtlas.xml");
@@ -39,7 +43,7 @@ public class LevelScene : Scene
 
     public override void Update(GameTime gameTime)
     {
-        _player.Update(gameTime);
+        _player.Update(gameTime, this);
     }
 
     public override void Draw(GameTime gameTime)
@@ -56,7 +60,10 @@ public class LevelScene : Scene
         HitboxView.DrawHitbox(Core.SpriteBatch, _player.GetHitbox());
         HitboxView.DrawPoint(Core.SpriteBatch, _player.Position);
 
-        HitboxView.DrawHitbox(Core.SpriteBatch, _roomBounds);
+        foreach (ICollidable collider in LevelObjects)
+        {
+            HitboxView.DrawHitbox(Core.SpriteBatch, collider.GetHitbox());
+        }
 
         // Always end the sprite batch when finished.
         Core.SpriteBatch.End();

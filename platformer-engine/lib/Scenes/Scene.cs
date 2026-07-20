@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using lib.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
@@ -18,6 +20,11 @@ public abstract class Scene : IDisposable
     /// Gets a value that indicates if the scene has been disposed of.
     /// </summary>
     public bool IsDisposed { get; private set; }
+
+    /// <summary>
+    /// Stores a list of collidable objects within the current scene.
+    /// </summary>
+    public List<ICollidable> LevelObjects { get; private set; }
 
     /// <summary>
     /// Creates a new scene instance.
@@ -45,6 +52,7 @@ public abstract class Scene : IDisposable
     /// </remarks>
     public virtual void Initialize()
     {
+        LevelObjects = [];
         LoadContent();
     }
 

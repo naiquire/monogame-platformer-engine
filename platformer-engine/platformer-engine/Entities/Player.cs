@@ -8,6 +8,7 @@ using platformer_engine;
 using lib;
 using lib.Input;
 using lib.Entities;
+using lib.Scenes;
 
 namespace Entities;
 
@@ -57,13 +58,12 @@ class Player : Entity
 
         _gravity = new(0, 0.5f);
 
-        GenerateHitbox(30, 60, Alignment.BottomMiddle);
+        GenerateHitbox(30, 60, Alignment.Bottom);
     }
 
-    public override void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime, Scene scene)
     {
         
-
         CheckKeystrokes();
 
         switch (_playerState.State)
@@ -76,16 +76,16 @@ class Player : Entity
                 Position.X += Velocity.X;
                 UpdateHitbox();
 
-                if (AABB(previousHitbox, GetHitbox(), LevelScene._roomBounds))
+                if (AABB(previousHitbox, GetHitbox(), scene.LevelObjects[0].GetHitbox()))
                 {
                     if (Velocity.X > 0)
                     {
-                        float distance = Hitbox.Hitbox.Right - LevelScene._roomBounds.Left;
+                        float distance = Hitbox.Hitbox.Right - scene.LevelObjects[0].GetHitbox().Left;
                         Position.X -= distance;
                     }
                     if (Velocity.X < 0)
                     {
-                        float distance = LevelScene._roomBounds.Right - Hitbox.Hitbox.Left;
+                        float distance = scene.LevelObjects[0].GetHitbox().Right - Hitbox.Hitbox.Left;
                         Position.X += distance;
                     }
 
@@ -100,29 +100,24 @@ class Player : Entity
                 Position.Y += Velocity.Y;
                 UpdateHitbox();
 
-                if (AABB(previousHitbox, GetHitbox(), LevelScene._roomBounds))
+                if (AABB(previousHitbox, GetHitbox(), scene.LevelObjects[0].GetHitbox()))
                 {
                     if (Velocity.Y > 0)
                     {
-                        float distance = Hitbox.Hitbox.Bottom - LevelScene._roomBounds.Top;
+                        float distance = Hitbox.Hitbox.Bottom - scene.LevelObjects[0].GetHitbox().Top;
                         Position.Y -= distance;
-
-                        _playerState.IsAirborne = false;
                     }
                     if (Velocity.Y < 0)
                     {
-                        float distance = LevelScene._roomBounds.Bottom - Hitbox.Hitbox.Top;
+                        float distance = scene.LevelObjects[0].GetHitbox().Bottom - Hitbox.Hitbox.Top;
                         Position.Y += distance;
                     }
 
                     Velocity.Y = 0;
                     UpdateHitbox();
                 }
-                else
-                {
-                    // falling off ledge (broken)
-                    // _playerState.IsAirborne = true;
-                }
+
+                // System.Console.WriteLine($"{Position.X} {Position.Y}");
 
                 break;
             case State.Dashing:
@@ -134,7 +129,9 @@ class Player : Entity
                 break;
         }
 
-        base.Update(gameTime);
+        _playerState.IsAirborne = CheckIfAirborne(scene);
+
+        base.Update(gameTime, scene);
     }
 
     // private void HandleRoomCollision(Vector2 currentPosition)
@@ -221,11 +218,18 @@ class Player : Entity
         }
 
         // handle gravity
-        Velocity += _gravity;
+        if (_playerState.IsAirborne) Velocity += _gravity;
         if (Velocity.Y > 20)
         {
             Velocity.Y = 20;
         }
+    }
+
+    private bool CheckIfAirborne(Scene scene)
+    {
+        Rectangle hitboxForFloorCollision = GetHitbox();
+        hitboxForFloorCollision.Offset(0, 1);
+        return !hitboxForFloorCollision.Intersects(scene.LevelObjects[0].GetHitbox());
     }
     
     private void Dash()
