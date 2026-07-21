@@ -1,18 +1,22 @@
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using lib.Graphics;
-using lib.Graphics.Sprites;
-using lib.Structures;
-using platformer_engine;
-using lib;
-using lib.Input;
-using lib.Entities;
-using lib.Scenes;
 using System.Collections.Generic;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
+using lib;
+using lib.Colliders.Entities;
+using lib.Colliders;
+using lib.Scenes;
+using System.Diagnostics.Contracts;
+using System.ComponentModel;
 
 namespace Entities;
 
+public enum Direction
+{
+    Up,
+    Down,
+    Left,
+    Right
+}
 public enum State
 {
     Normal,
@@ -26,8 +30,8 @@ public record PlayerState
     public double DashTimeRemaining;
     public bool IsAirborne;
     public bool CanDash;
+    public bool IsCrouched;
 }
-
 public record Cheats
 {
     public bool Noclip;
@@ -35,7 +39,7 @@ public record Cheats
     public bool InfiniteDash;
 }
 
-class Player : Entity
+public class Player : Entity
 {
     private readonly PlayerState _playerState;
     private readonly Cheats _cheats;
@@ -131,7 +135,32 @@ class Player : Entity
                 _playerState.CanDash = false;
             }
         }
+
+        // crouch
+        if (Core.Input.Keyboard.IsKeyDown(Keys.Down))
+        {
+            if (!_playerState.IsAirborne)
+            {
+                Crouch();
+            }
+        }
+        if (Core.Input.Keyboard.IsKeyUp(Keys.Down) && _playerState.IsCrouched)
+        {
+            Uncrouch();
+        }
     }
+
+    private void Crouch()
+    {
+        _playerState.IsCrouched = true;
+        GenerateHitbox(30, 30, Hitbox.Alignment);
+    }
+    private void Uncrouch()
+    {
+        _playerState.IsCrouched = false;
+        GenerateHitbox(30, 60, Hitbox.Alignment);
+    }
+
     private void UpdateYVelocity()
     {
         const float y_speed = 10;
@@ -164,6 +193,8 @@ class Player : Entity
             {
                 Velocity.Y = -y_speed;
                 _playerState.IsAirborne = true;
+
+                if (_playerState.IsCrouched) Uncrouch();
             }
         }
 
@@ -177,40 +208,46 @@ class Player : Entity
 
     private void HandleHorizontalCollision(List<ICollidable> colliders)
     {
-        if (SweptAABB(GetPreviousHitbox(), GetHitbox(), colliders[0].GetHitbox()))
+        foreach (ICollidable collider in colliders)
         {
-            if (Velocity.X > 0)
+            if (SweptAABB(GetPreviousHitbox(), GetHitbox(), collider.GetHitbox()))
             {
-                float distance = Hitbox.Hitbox.Right - colliders[0].GetHitbox().Left;
-                Position.X -= distance;
-            }
-            if (Velocity.X < 0)
-            {
-                float distance = colliders[0].GetHitbox().Right - Hitbox.Hitbox.Left;
-                Position.X += distance;
-            }
+                if (Velocity.X > 0)
+                {
+                    float distance = Hitbox.Hitbox.Right - collider.GetHitbox().Left;
+                    Position.X -= distance;
+                }
+                if (Velocity.X < 0)
+                {
+                    float distance = collider.GetHitbox().Right - Hitbox.Hitbox.Left;
+                    Position.X += distance;
+                }
 
-            Velocity.X = 0;
-            UpdateHitbox();
+                Velocity.X = 0;
+                UpdateHitbox();
+            }
         }
     }
     private void HandleVerticalCollision(List<ICollidable> colliders)
     {
-        if (SweptAABB(GetPreviousHitbox(), GetHitbox(), colliders[0].GetHitbox()))
+        foreach (ICollidable collider in colliders)
         {
-            if (Velocity.Y > 0)
+            if (SweptAABB(GetPreviousHitbox(), GetHitbox(), collider.GetHitbox()))
             {
-                float distance = Hitbox.Hitbox.Bottom - colliders[0].GetHitbox().Top;
-                Position.Y -= distance;
-            }
-            if (Velocity.Y < 0)
-            {
-                float distance = colliders[0].GetHitbox().Bottom - Hitbox.Hitbox.Top;
-                Position.Y += distance;
-            }
+                if (Velocity.Y > 0)
+                {
+                    float distance = Hitbox.Hitbox.Bottom - collider.GetHitbox().Top;
+                    Position.Y -= distance;
+                }
+                if (Velocity.Y < 0)
+                {
+                    float distance = collider.GetHitbox().Bottom - Hitbox.Hitbox.Top;
+                    Position.Y += distance;
+                }
 
-            Velocity.Y = 0;
-            UpdateHitbox();
+                Velocity.Y = 0;
+                UpdateHitbox();
+            }
         }
     }
 

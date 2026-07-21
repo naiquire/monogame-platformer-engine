@@ -1,20 +1,35 @@
 using System;
 using System.ComponentModel;
 using Microsoft.Xna.Framework;
-using lib.Entities;
 using lib.Scenes;
+using lib.Colliders.Entities;
+
+namespace lib.Colliders;
+
+public enum Alignment
+{
+    TopLeft,
+    Top,
+    TopRight,
+    Left,
+    Center,
+    Right,
+    BottomLeft,
+    Bottom,
+    BottomRight
+}
 
 public abstract class Collider(Vector2 position)
 {
     /// <summary>
     /// Defines a rectangular region from which collisions are calculated with.
     /// </summary>
-    protected EntityHitbox Hitbox;
+    protected HitboxManager Hitbox;
     public Rectangle GetHitbox() => Hitbox.Hitbox;
     public Rectangle GetPreviousHitbox() => Hitbox.PreviousHitbox;
 
     /// <summary>
-    /// The position of the <see cref="Collider"/> with respect to the top-left corner.
+    /// The position of the <see cref="Collider"/> with respect to the origin.
     /// </summary>
     public Vector2 Position = position;
 

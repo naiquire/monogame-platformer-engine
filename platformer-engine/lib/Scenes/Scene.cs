@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using lib.Entities;
+using lib.Colliders;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 

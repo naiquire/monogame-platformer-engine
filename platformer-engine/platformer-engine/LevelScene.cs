@@ -4,7 +4,8 @@ using lib;
 using lib.Graphics.Tilemaps;
 using lib.Scenes;
 using Entities;
-using lib.Entities;
+using lib.Colliders;
+using lib.Colliders.Objects;
 
 namespace platformer_engine;
 
@@ -27,8 +28,19 @@ public class LevelScene : Scene
 
         LevelObject floor = new(new Vector2(100, 650));
         floor.GenerateHitbox(1000, 50);
-
         LevelObjects.Add(floor);
+
+        LevelObject wall = new(new Vector2(500, 600));
+        wall.GenerateHitbox(100, 50);
+        LevelObjects.Add(wall);
+
+        LevelObject wall2 = new(new Vector2(700, 550));
+        wall2.GenerateHitbox(100, 20);
+        LevelObjects.Add(wall2);
+
+        LevelObject wall3 = new(new Vector2(200, 500));
+        wall3.GenerateHitbox(20, 100);
+        LevelObjects.Add(wall3);
 
         // Create the texture atlas from the XML configuration file.
         // TextureAtlas atlas = TextureAtlas.FromFile(Content, "Images/TextureAtlas.xml");
