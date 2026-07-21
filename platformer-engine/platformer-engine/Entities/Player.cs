@@ -9,6 +9,7 @@ using lib;
 using lib.Input;
 using lib.Entities;
 using lib.Scenes;
+using System.Collections.Generic;
 
 namespace Entities;
 
@@ -53,7 +54,7 @@ class Player : Entity
         {
             Noclip = false,
             InfiniteJump = false,
-            InfiniteDash = true
+            InfiniteDash = false
         };
 
         _gravity = new(0, 0.5f);
@@ -63,111 +64,39 @@ class Player : Entity
 
     public override void Update(GameTime gameTime, Scene scene)
     {
-        
         CheckKeystrokes();
 
         switch (_playerState.State)
         {
             case State.Normal:
-                Vector2 previousPosition = Position;
-                Rectangle previousHitbox = GetHitbox();
 
                 UpdateXVelocity();
                 Position.X += Velocity.X;
                 UpdateHitbox();
-
-                if (AABB(previousHitbox, GetHitbox(), scene.LevelObjects[0].GetHitbox()))
-                {
-                    if (Velocity.X > 0)
-                    {
-                        float distance = Hitbox.Hitbox.Right - scene.LevelObjects[0].GetHitbox().Left;
-                        Position.X -= distance;
-                    }
-                    if (Velocity.X < 0)
-                    {
-                        float distance = scene.LevelObjects[0].GetHitbox().Right - Hitbox.Hitbox.Left;
-                        Position.X += distance;
-                    }
-
-                    Velocity.X = 0;
-                    UpdateHitbox();
-                }
-
-                previousPosition = Position;
-                previousHitbox = GetHitbox();
+                HandleHorizontalCollision(scene.LevelObjects);
 
                 UpdateYVelocity();
                 Position.Y += Velocity.Y;
                 UpdateHitbox();
-
-                if (AABB(previousHitbox, GetHitbox(), scene.LevelObjects[0].GetHitbox()))
-                {
-                    if (Velocity.Y > 0)
-                    {
-                        float distance = Hitbox.Hitbox.Bottom - scene.LevelObjects[0].GetHitbox().Top;
-                        Position.Y -= distance;
-                    }
-                    if (Velocity.Y < 0)
-                    {
-                        float distance = scene.LevelObjects[0].GetHitbox().Bottom - Hitbox.Hitbox.Top;
-                        Position.Y += distance;
-                    }
-
-                    Velocity.Y = 0;
-                    UpdateHitbox();
-                }
-
-                // System.Console.WriteLine($"{Position.X} {Position.Y}");
+                HandleVerticalCollision(scene.LevelObjects);
 
                 break;
             case State.Dashing:
+
                 UpdateDash(gameTime);
                 Position += Velocity;
                 UpdateHitbox();
+                HandleHorizontalCollision(scene.LevelObjects);
+                
                 break;
             default:
                 break;
         }
 
-        _playerState.IsAirborne = CheckIfAirborne(scene);
+        _playerState.IsAirborne = CheckIfAirborne(scene.LevelObjects);
 
         base.Update(gameTime, scene);
     }
-
-    // private void HandleRoomCollision(Vector2 currentPosition)
-    // {
-    //     Rectangle roomBounds = new Rectangle();
-
-    //     if (Hitbox.Left <= roomBounds.Left)
-    //     {
-    //         Velocity.X = 0;
-    //         if (Velocity.Y > 0) Velocity.Y = 0;
-    //         Position.X = currentPosition.X;
-    //         UpdateHitbox();
-    //     }
-    //     if (Hitbox.Right >= roomBounds.Right)
-    //     {
-    //         Velocity.X = 0;
-    //         if (Velocity.Y > 0) Velocity.Y = 0;
-    //         Position.X = currentPosition.X;
-    //         UpdateHitbox();
-    //     }
-
-    //     if (Hitbox.Top <= roomBounds.Top)
-    //     {
-    //         Velocity.Y = 0;
-    //         Position.Y = currentPosition.Y;
-    //         UpdateHitbox();
-    //     }
-    //     if (Hitbox.Bottom >= roomBounds.Bottom)
-    //     {
-    //         Velocity.Y = 0;
-    //         Position.Y = currentPosition.Y;
-    //         UpdateHitbox();
-    //         _playerState.IsAirborne = false;
-    //         _playerState.CanDash = true;
-    //     }
-    // }
 
     private void UpdateXVelocity()
     {
@@ -207,6 +136,27 @@ class Player : Entity
     {
         const float y_speed = 10;
 
+        if (_cheats.Noclip)
+        {
+            // vertical movement
+            bool upKeyPressed = Core.Input.Keyboard.IsKeyDown(Keys.Up);
+            bool downKeyPressed = Core.Input.Keyboard.IsKeyDown(Keys.Down);
+            if (upKeyPressed && !downKeyPressed)
+            {
+                Velocity.Y = -y_speed;
+            }
+            else if (!upKeyPressed && downKeyPressed)
+            {
+                Velocity.Y = y_speed;
+            }
+            else
+            {
+                Velocity.Y = 0;
+            }
+
+            return;
+        }
+
         // jumping
         if (Core.Input.Keyboard.WasKeyJustPressed(Keys.Z))
         {
@@ -225,11 +175,57 @@ class Player : Entity
         }
     }
 
-    private bool CheckIfAirborne(Scene scene)
+    private void HandleHorizontalCollision(List<ICollidable> colliders)
+    {
+        if (SweptAABB(GetPreviousHitbox(), GetHitbox(), colliders[0].GetHitbox()))
+        {
+            if (Velocity.X > 0)
+            {
+                float distance = Hitbox.Hitbox.Right - colliders[0].GetHitbox().Left;
+                Position.X -= distance;
+            }
+            if (Velocity.X < 0)
+            {
+                float distance = colliders[0].GetHitbox().Right - Hitbox.Hitbox.Left;
+                Position.X += distance;
+            }
+
+            Velocity.X = 0;
+            UpdateHitbox();
+        }
+    }
+    private void HandleVerticalCollision(List<ICollidable> colliders)
+    {
+        if (SweptAABB(GetPreviousHitbox(), GetHitbox(), colliders[0].GetHitbox()))
+        {
+            if (Velocity.Y > 0)
+            {
+                float distance = Hitbox.Hitbox.Bottom - colliders[0].GetHitbox().Top;
+                Position.Y -= distance;
+            }
+            if (Velocity.Y < 0)
+            {
+                float distance = colliders[0].GetHitbox().Bottom - Hitbox.Hitbox.Top;
+                Position.Y += distance;
+            }
+
+            Velocity.Y = 0;
+            UpdateHitbox();
+        }
+    }
+
+
+    private bool CheckIfAirborne(List<ICollidable> colliders)
     {
         Rectangle hitboxForFloorCollision = GetHitbox();
         hitboxForFloorCollision.Offset(0, 1);
-        return !hitboxForFloorCollision.Intersects(scene.LevelObjects[0].GetHitbox());
+        
+        foreach (ICollidable collider in colliders)
+        {
+            if (hitboxForFloorCollision.Intersects(collider.GetHitbox())) return false;
+        }
+
+        return true;
     }
     
     private void Dash()
@@ -262,7 +258,7 @@ class Player : Entity
     }
 
 
-    public bool AABB(Rectangle currentHitbox, Rectangle newHitbox, Rectangle obj)
+    public bool SweptAABB(Rectangle currentHitbox, Rectangle newHitbox, Rectangle obj)
     {
         if (_cheats.Noclip) return false;
 

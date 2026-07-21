@@ -11,6 +11,7 @@ public abstract class Collider(Vector2 position)
     /// </summary>
     protected EntityHitbox Hitbox;
     public Rectangle GetHitbox() => Hitbox.Hitbox;
+    public Rectangle GetPreviousHitbox() => Hitbox.PreviousHitbox;
 
     /// <summary>
     /// The position of the <see cref="Collider"/> with respect to the top-left corner.

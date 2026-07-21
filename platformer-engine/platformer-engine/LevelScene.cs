@@ -49,7 +49,7 @@ public class LevelScene : Scene
     public override void Draw(GameTime gameTime)
     {
         // Clear the back buffer.
-        Core.GraphicsDevice.Clear(Color.CornflowerBlue);
+        Core.GraphicsDevice.Clear(Color.DarkSlateGray);
 
         // Begin the sprite batch to prepare for rendering.
         Core.SpriteBatch.Begin(samplerState: SamplerState.PointClamp);

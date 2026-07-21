@@ -29,6 +29,7 @@ public enum Alignment
 public struct EntityHitbox(int width, int height, Alignment alignment)
 {
     public Rectangle Hitbox { get; private set; }
+    public Rectangle PreviousHitbox { get; private set; }
     public readonly int Width = width;
     public readonly int Height = height;
     public readonly Alignment Alignment = alignment;
@@ -39,6 +40,7 @@ public struct EntityHitbox(int width, int height, Alignment alignment)
     /// <param name="hitbox"></param>
     public void LoadHitbox(Rectangle hitbox)
     {
+        PreviousHitbox = Hitbox;
         Hitbox = hitbox;
     }
 }
