@@ -42,6 +42,18 @@ public class LevelScene : Scene
         wall3.GenerateHitbox(20, 100);
         LevelObjects.Add(wall3);
 
+        LevelObject wall4 = new(new Vector2(300, 300));
+        wall4.GenerateHitbox(20, 100);
+        LevelObjects.Add(wall4);
+
+        LevelObject wall5 = new(new Vector2(200, 100));
+        wall5.GenerateHitbox(20, 100);
+        LevelObjects.Add(wall5);
+
+        LevelObject walll2 = new(new Vector2(800, 150));
+        walll2.GenerateHitbox(100, 20);
+        LevelObjects.Add(walll2);
+
         // Create the texture atlas from the XML configuration file.
         // TextureAtlas atlas = TextureAtlas.FromFile(Content, "Images/TextureAtlas.xml");
 

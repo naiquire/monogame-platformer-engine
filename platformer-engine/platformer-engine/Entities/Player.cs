@@ -20,7 +20,8 @@ public enum Direction
 public enum State
 {
     Normal,
-    Dashing
+    Dashing,
+    Clinged
 }
 
 public record PlayerState
@@ -28,6 +29,7 @@ public record PlayerState
     public State State;
     public Direction DirectionFacing;
     public double DashTimeRemaining;
+    public double WallJumpTimeRemaining;
     public bool IsAirborne;
     public bool CanDash;
     public bool IsCrouched;
@@ -52,7 +54,8 @@ public class Player : Entity
             State = State.Normal,
             DirectionFacing = Direction.Right,
             IsAirborne = true,
-            CanDash = true
+            CanDash = true,
+            DashTimeRemaining = -1
         };
         _cheats = new()
         {
@@ -68,21 +71,33 @@ public class Player : Entity
 
     public override void Update(GameTime gameTime, Scene scene)
     {
+        if (!_playerState.IsAirborne || _playerState.State == State.Clinged) _playerState.CanDash = true;
         CheckKeystrokes();
 
         switch (_playerState.State)
         {
             case State.Normal:
+            case State.Clinged:
 
-                UpdateXVelocity();
+
+                UpdateXVelocity(gameTime);
                 Position.X += Velocity.X;
                 UpdateHitbox();
                 HandleHorizontalCollision(scene.LevelObjects);
 
-                UpdateYVelocity();
+                UpdateYVelocity(scene.LevelObjects);
                 Position.Y += Velocity.Y;
                 UpdateHitbox();
                 HandleVerticalCollision(scene.LevelObjects);
+
+                if (CheckIfClingedLeft(scene.LevelObjects) || CheckIfClingedRight(scene.LevelObjects))
+                {
+                    if (_playerState.IsAirborne) _playerState.State = State.Clinged;
+                }
+                else
+                {
+                    _playerState.State = State.Normal;
+                }
 
                 break;
             case State.Dashing:
@@ -97,13 +112,20 @@ public class Player : Entity
                 break;
         }
 
-        _playerState.IsAirborne = CheckIfAirborne(scene.LevelObjects);
+        _playerState.IsAirborne = UpdateAirborneState(scene.LevelObjects);
+        
 
         base.Update(gameTime, scene);
     }
 
-    private void UpdateXVelocity()
+    private void UpdateXVelocity(GameTime gameTime)
     {
+        if (_playerState.WallJumpTimeRemaining > 0)
+        {
+            UpdateWallJump(gameTime);
+            return;
+        }
+
         const float x_speed = 10;
 
         // horizontal movement
@@ -129,20 +151,16 @@ public class Player : Entity
         // dashing
         if (Core.Input.Keyboard.WasKeyJustPressed(Keys.C))
         {
-            if (_playerState.CanDash || _cheats.InfiniteDash)
+            if (_playerState.DashTimeRemaining == -1 && (_playerState.CanDash || _cheats.InfiniteDash))
             {
                 Dash();
-                _playerState.CanDash = false;
             }
         }
 
         // crouch
-        if (Core.Input.Keyboard.IsKeyDown(Keys.Down))
+        if (Core.Input.Keyboard.IsKeyDown(Keys.Down) && !_playerState.IsAirborne)
         {
-            if (!_playerState.IsAirborne)
-            {
-                Crouch();
-            }
+            Crouch();
         }
         if (Core.Input.Keyboard.IsKeyUp(Keys.Down) && _playerState.IsCrouched)
         {
@@ -161,7 +179,41 @@ public class Player : Entity
         GenerateHitbox(30, 60, Hitbox.Alignment);
     }
 
-    private void UpdateYVelocity()
+    private void UpdateYVelocity(List<ICollidable> colliders)
+    {
+        // jumping
+        if (Core.Input.Keyboard.WasKeyJustPressed(Keys.Z))
+        {
+            bool leftCling = CheckIfClingedLeft(colliders);
+            bool rightCling = CheckIfClingedRight(colliders);
+            
+            if (!_playerState.IsAirborne || _cheats.InfiniteJump)
+            {
+                Jump();
+            }
+            else
+            {
+                if (leftCling)
+                {
+                    WallJump(Direction.Left);
+                }
+                if (rightCling)
+                {
+                    WallJump(Direction.Right);
+                }
+            }
+            
+        }
+
+        // handle gravity
+        if (_playerState.IsAirborne) Velocity += _gravity;
+        if (Velocity.Y > 20)
+        {
+            Velocity.Y = 20;
+        }
+    }
+
+    private void Jump()
     {
         const float y_speed = 10;
 
@@ -186,23 +238,37 @@ public class Player : Entity
             return;
         }
 
-        // jumping
-        if (Core.Input.Keyboard.WasKeyJustPressed(Keys.Z))
-        {
-            if (!_playerState.IsAirborne || _cheats.InfiniteJump)
-            {
-                Velocity.Y = -y_speed;
-                _playerState.IsAirborne = true;
+        Velocity.Y = -y_speed;
+        _playerState.IsAirborne = true;
+        _playerState.CanDash = true;
 
-                if (_playerState.IsCrouched) Uncrouch();
-            }
+        if (_playerState.IsCrouched) Uncrouch();
+    }
+
+    private void WallJump(Direction direction)
+    {
+        Jump();
+        _playerState.WallJumpTimeRemaining = 0.1f;
+    }
+
+    private void UpdateWallJump(GameTime gameTime)
+    {
+        const float x_speed = 10;
+
+        if (_playerState.DirectionFacing == Direction.Left)
+        {
+            Velocity.X = +x_speed;
         }
-
-        // handle gravity
-        if (_playerState.IsAirborne) Velocity += _gravity;
-        if (Velocity.Y > 20)
+        if (_playerState.DirectionFacing == Direction.Right)
         {
-            Velocity.Y = 20;
+            Velocity.X = -x_speed;
+        }
+        
+        _playerState.WallJumpTimeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (_playerState.WallJumpTimeRemaining <= 0)
+        {
+            _playerState.WallJumpTimeRemaining = -1;
         }
     }
 
@@ -252,7 +318,7 @@ public class Player : Entity
     }
 
 
-    private bool CheckIfAirborne(List<ICollidable> colliders)
+    private bool UpdateAirborneState(List<ICollidable> colliders)
     {
         Rectangle hitboxForFloorCollision = GetHitbox();
         hitboxForFloorCollision.Offset(0, 1);
@@ -264,11 +330,37 @@ public class Player : Entity
 
         return true;
     }
-    
+
+    private bool CheckIfClingedLeft(List<ICollidable> colliders)
+    {
+        Rectangle leftWall = GetHitbox();
+        leftWall.Offset(1, 0);
+
+        foreach (ICollidable collider in colliders)
+        {
+            if (leftWall.Intersects(collider.GetHitbox())) return true;
+        }
+
+        return false;
+    }
+    private bool CheckIfClingedRight(List<ICollidable> colliders)
+    {
+        Rectangle rightWall = GetHitbox();
+        rightWall.Offset(-1, 0);
+
+        foreach (ICollidable collider in colliders)
+        {
+            if (rightWall.Intersects(collider.GetHitbox())) return true;
+        }
+
+        return false;
+    }
+
     private void Dash()
     {
         _playerState.State = State.Dashing;
         _playerState.DashTimeRemaining = 0.1f;
+        if (_playerState.IsAirborne) _playerState.CanDash = false;
     }
     private void UpdateDash(GameTime gameTime)
     {
@@ -290,7 +382,6 @@ public class Player : Entity
         {
             _playerState.State = State.Normal;
             _playerState.DashTimeRemaining = -1;
-            _playerState.CanDash = true;
         }
     }
 
