@@ -5,28 +5,27 @@ using lib;
 using lib.Colliders.Entities;
 using lib.Colliders;
 using lib.Scenes;
-using System.Diagnostics.Contracts;
-using System.ComponentModel;
+using System;
 
 namespace Entities;
 
 public enum Direction
 {
-    Up,
-    Down,
-    Left,
-    Right
+    Up, Down, Left, Right
 }
 public enum State
 {
-    Normal,
-    Dashing,
-    Clinged
+    Normal, Dashing
+}
+public enum ClingState
+{
+    None, Left, Right
 }
 
 public record PlayerState
 {
     public State State;
+    public ClingState ClingState;
     public Direction DirectionFacing;
     public double DashTimeRemaining;
     public double WallJumpTimeRemaining;
@@ -54,8 +53,10 @@ public class Player : Entity
             State = State.Normal,
             DirectionFacing = Direction.Right,
             IsAirborne = true,
-            CanDash = true,
-            DashTimeRemaining = -1
+            CanDash = false,
+            DashTimeRemaining = -1,
+            IsCrouched = false,
+            ClingState = ClingState.None
         };
         _cheats = new()
         {
@@ -71,51 +72,86 @@ public class Player : Entity
 
     public override void Update(GameTime gameTime, Scene scene)
     {
-        if (!_playerState.IsAirborne || _playerState.State == State.Clinged) _playerState.CanDash = true;
-        CheckKeystrokes();
-
         switch (_playerState.State)
         {
             case State.Normal:
-            case State.Clinged:
 
-
-                UpdateXVelocity(gameTime);
-                Position.X += Velocity.X;
-                UpdateHitbox();
-                HandleHorizontalCollision(scene.LevelObjects);
-
-                UpdateYVelocity(scene.LevelObjects);
-                Position.Y += Velocity.Y;
-                UpdateHitbox();
-                HandleVerticalCollision(scene.LevelObjects);
-
-                if (CheckIfClingedLeft(scene.LevelObjects) || CheckIfClingedRight(scene.LevelObjects))
-                {
-                    if (_playerState.IsAirborne) _playerState.State = State.Clinged;
-                }
-                else
-                {
-                    _playerState.State = State.Normal;
-                }
+                UpdateXPosition(gameTime, scene);
+                UpdateYPosition(gameTime, scene);
 
                 break;
             case State.Dashing:
 
-                UpdateDash(gameTime);
-                Position += Velocity;
-                UpdateHitbox();
-                HandleHorizontalCollision(scene.LevelObjects);
+                UpdateXPosition(gameTime, scene);
                 
                 break;
             default:
                 break;
         }
 
-        _playerState.IsAirborne = UpdateAirborneState(scene.LevelObjects);
-        
+        CheckKeystrokes(scene);
+        UpdateStates(scene);
+        Console.WriteLine($"{_playerState.State} , {_playerState.DirectionFacing} , {_playerState.ClingState}");
 
         base.Update(gameTime, scene);
+    }
+    private void UpdateStates(Scene scene)
+    {
+        // update state values
+        _playerState.IsAirborne = IsPlayerAirborne(scene.LevelObjects);
+        if (CanDashBeReplenished()) _playerState.CanDash = true;
+
+        _playerState.ClingState = ClingState.None;
+        bool clingedLeft = CheckIfClingedLeft(scene.LevelObjects);
+        bool clingedRight = CheckIfClingedRight(scene.LevelObjects);
+
+        if (clingedLeft && _playerState.IsAirborne) _playerState.ClingState = ClingState.Left;
+        if (clingedRight && _playerState.IsAirborne) _playerState.ClingState = ClingState.Right;
+    }
+    private void CheckKeystrokes(Scene scene)
+    {
+        // dashing
+        if (Core.Input.Keyboard.WasKeyJustPressed(Keys.C))
+        {
+            if (_playerState.DashTimeRemaining == -1 && (_playerState.CanDash || _cheats.InfiniteDash))
+            {
+                Dash();
+            }
+        }
+
+        // crouch
+        if (Core.Input.Keyboard.IsKeyDown(Keys.Down) && !_playerState.IsAirborne)
+        {
+            Crouch();
+        }
+        if (Core.Input.Keyboard.IsKeyUp(Keys.Down) && _playerState.IsCrouched)
+        {
+            AttemptUncrouch(scene);
+        }
+    }
+
+    private void UpdateXPosition(GameTime gameTime, Scene scene)
+    {
+        switch (_playerState.State)
+        {
+            case State.Normal:
+                UpdateXVelocity(gameTime);
+                break;
+            case State.Dashing:
+                UpdateDash(gameTime);
+                break;
+        }
+
+        Position.X += Velocity.X;
+        UpdateHitbox();
+        HandleHorizontalCollision(scene.LevelObjects);
+    }
+    private void UpdateYPosition(GameTime gameTime, Scene scene)
+    {
+        UpdateYVelocity(scene);
+        Position.Y += Velocity.Y;
+        UpdateHitbox();
+        HandleVerticalCollision(scene.LevelObjects);
     }
 
     private void UpdateXVelocity(GameTime gameTime)
@@ -146,63 +182,19 @@ public class Player : Entity
             Velocity.X = 0;
         }
     }
-    private void CheckKeystrokes()
-    {
-        // dashing
-        if (Core.Input.Keyboard.WasKeyJustPressed(Keys.C))
-        {
-            if (_playerState.DashTimeRemaining == -1 && (_playerState.CanDash || _cheats.InfiniteDash))
-            {
-                Dash();
-            }
-        }
-
-        // crouch
-        if (Core.Input.Keyboard.IsKeyDown(Keys.Down) && !_playerState.IsAirborne)
-        {
-            Crouch();
-        }
-        if (Core.Input.Keyboard.IsKeyUp(Keys.Down) && _playerState.IsCrouched)
-        {
-            Uncrouch();
-        }
-    }
-
-    private void Crouch()
-    {
-        _playerState.IsCrouched = true;
-        GenerateHitbox(30, 30, Hitbox.Alignment);
-    }
-    private void Uncrouch()
-    {
-        _playerState.IsCrouched = false;
-        GenerateHitbox(30, 60, Hitbox.Alignment);
-    }
-
-    private void UpdateYVelocity(List<ICollidable> colliders)
+    private void UpdateYVelocity(Scene scene)
     {
         // jumping
         if (Core.Input.Keyboard.WasKeyJustPressed(Keys.Z))
-        {
-            bool leftCling = CheckIfClingedLeft(colliders);
-            bool rightCling = CheckIfClingedRight(colliders);
-            
+        {            
             if (!_playerState.IsAirborne || _cheats.InfiniteJump)
             {
-                Jump();
+                Jump(scene);
             }
-            else
+            else if (_playerState.ClingState != ClingState.None)
             {
-                if (leftCling)
-                {
-                    WallJump(Direction.Left);
-                }
-                if (rightCling)
-                {
-                    WallJump(Direction.Right);
-                }
+                WallJump(scene);
             }
-            
         }
 
         // handle gravity
@@ -213,8 +205,13 @@ public class Player : Entity
         }
     }
 
-    private void Jump()
+    private void Jump(Scene scene)
     {
+        if (_playerState.IsCrouched)
+        {
+            AttemptUncrouch(scene);
+        }
+
         const float y_speed = 10;
 
         if (_cheats.Noclip)
@@ -240,28 +237,34 @@ public class Player : Entity
 
         Velocity.Y = -y_speed;
         _playerState.IsAirborne = true;
-        _playerState.CanDash = true;
 
-        if (_playerState.IsCrouched) Uncrouch();
+        
     }
-
-    private void WallJump(Direction direction)
+    private void WallJump(Scene scene)
     {
-        Jump();
+        if (_playerState.ClingState == ClingState.Left)
+        {
+            _playerState.DirectionFacing = Direction.Left;
+        }
+        if (_playerState.ClingState == ClingState.Right)
+        {
+            _playerState.DirectionFacing = Direction.Right;
+        }
+
+        Jump(scene);
         _playerState.WallJumpTimeRemaining = 0.1f;
     }
-
     private void UpdateWallJump(GameTime gameTime)
     {
         const float x_speed = 10;
 
         if (_playerState.DirectionFacing == Direction.Left)
         {
-            Velocity.X = +x_speed;
+            Velocity.X = -x_speed;
         }
         if (_playerState.DirectionFacing == Direction.Right)
         {
-            Velocity.X = -x_speed;
+            Velocity.X = +x_speed;
         }
         
         _playerState.WallJumpTimeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
@@ -317,8 +320,49 @@ public class Player : Entity
         }
     }
 
+    private void Dash()
+    {
+        if (_playerState.ClingState == ClingState.Left)
+        {
+            _playerState.DirectionFacing = Direction.Left;
+        }
+        if (_playerState.ClingState == ClingState.Right)
+        {
+            _playerState.DirectionFacing = Direction.Right;
+        }
 
-    private bool UpdateAirborneState(List<ICollidable> colliders)
+        _playerState.State = State.Dashing;
+        _playerState.DashTimeRemaining = 0.1f;
+        _playerState.CanDash = false;
+    }
+    private void UpdateDash(GameTime gameTime)
+    {
+        const float dashSpeed = 30f;
+
+        Velocity.Y = 0;
+        if (_playerState.DirectionFacing == Direction.Left)
+        {
+            Velocity.X = -dashSpeed;
+        }
+        if (_playerState.DirectionFacing == Direction.Right)
+        {
+            Velocity.X = dashSpeed;
+        }
+        
+        _playerState.DashTimeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (_playerState.DashTimeRemaining <= 0)
+        {
+            _playerState.State = State.Normal;
+            _playerState.DashTimeRemaining = -1;
+        }
+    }
+    private bool CanDashBeReplenished()
+    {
+        return !_playerState.IsAirborne || (_playerState.State != State.Dashing && _playerState.ClingState != ClingState.None);
+    }
+
+    private bool IsPlayerAirborne(List<ICollidable> colliders)
     {
         Rectangle hitboxForFloorCollision = GetHitbox();
         hitboxForFloorCollision.Offset(0, 1);
@@ -330,7 +374,6 @@ public class Player : Entity
 
         return true;
     }
-
     private bool CheckIfClingedLeft(List<ICollidable> colliders)
     {
         Rectangle leftWall = GetHitbox();
@@ -356,36 +399,37 @@ public class Player : Entity
         return false;
     }
 
-    private void Dash()
+    private void Crouch()
     {
-        _playerState.State = State.Dashing;
-        _playerState.DashTimeRemaining = 0.1f;
-        if (_playerState.IsAirborne) _playerState.CanDash = false;
-    }
-    private void UpdateDash(GameTime gameTime)
-    {
-        const float dashSpeed = 50f;
-
-        Velocity.Y = 0;
-        if (_playerState.DirectionFacing == Direction.Left)
-        {
-            Velocity.X = -dashSpeed;
-        }
-        if (_playerState.DirectionFacing == Direction.Right)
-        {
-            Velocity.X = dashSpeed;
-        }
-        
-        _playerState.DashTimeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_playerState.DashTimeRemaining <= 0)
-        {
-            _playerState.State = State.Normal;
-            _playerState.DashTimeRemaining = -1;
-        }
+        _playerState.IsCrouched = true;
+        GenerateHitbox(30, 30, Hitbox.Alignment);
     }
 
+    private bool AttemptUncrouch(Scene scene)
+    {
+        Uncrouch();
 
+        foreach (ICollidable collider in scene.LevelObjects)
+        {
+            if (AABB(GetHitbox(), collider.GetHitbox()))
+            {
+                Crouch();
+                return false;
+            }
+        }
+
+        return true;
+    }
+    private void Uncrouch()
+    {
+        _playerState.IsCrouched = false;
+        GenerateHitbox(30, 60, Hitbox.Alignment);
+    }
+
+    public bool AABB(Rectangle hitbox, Rectangle obj)
+    {
+        return obj.Intersects(hitbox);
+    }
     public bool SweptAABB(Rectangle currentHitbox, Rectangle newHitbox, Rectangle obj)
     {
         if (_cheats.Noclip) return false;
