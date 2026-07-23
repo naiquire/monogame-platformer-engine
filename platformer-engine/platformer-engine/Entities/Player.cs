@@ -7,6 +7,11 @@ using lib.Colliders;
 using lib.Scenes;
 using System;
 
+/// <summary> todo
+/// probably rewrite Player.cs from scratch with better implementations of states
+/// write keybindings library
+/// </summary>
+
 namespace Entities;
 
 public enum Direction
@@ -22,9 +27,17 @@ public enum ClingState
     None, Left, Right
 }
 
+public record Abilities
+{
+    public bool HasDash;
+    public bool HasCrouch;
+    public bool HasCling;
+}
+
 public record PlayerState
 {
     public State State;
+    public Abilities Abilities;
     public ClingState ClingState;
     public Direction DirectionFacing;
     public double DashTimeRemaining;
@@ -46,11 +59,17 @@ public class Player : Entity
     private readonly Cheats _cheats;
     private readonly Vector2 _gravity;
 
-    public Player() : base(new Vector2(200, 200))
+    public Player(Scene scene, Vector2 position) : base(scene, position)
     {
         _playerState = new()
         {
             State = State.Normal,
+            Abilities = new Abilities
+            { 
+                HasDash = true,
+                HasCrouch = true,
+                HasCling = true
+            },
             DirectionFacing = Direction.Right,
             IsAirborne = true,
             CanDash = false,
@@ -70,45 +89,50 @@ public class Player : Entity
         GenerateHitbox(30, 60, Alignment.Bottom);
     }
 
-    public override void Update(GameTime gameTime, Scene scene)
+    public override void Update(GameTime gameTime)
     {
         switch (_playerState.State)
         {
             case State.Normal:
 
-                UpdateXPosition(gameTime, scene);
-                UpdateYPosition(gameTime, scene);
+                UpdateXPosition(gameTime);
+                UpdateYPosition(gameTime);
 
                 break;
             case State.Dashing:
 
-                UpdateXPosition(gameTime, scene);
+                UpdateXPosition(gameTime);
                 
                 break;
             default:
                 break;
         }
 
-        CheckKeystrokes(scene);
-        UpdateStates(scene);
+        CheckKeystrokes();
+        UpdateStates();
         Console.WriteLine($"{_playerState.State} , {_playerState.DirectionFacing} , {_playerState.ClingState}");
 
-        base.Update(gameTime, scene);
+        base.Update(gameTime);
     }
-    private void UpdateStates(Scene scene)
+    private void UpdateStates()
     {
-        // update state values
-        _playerState.IsAirborne = IsPlayerAirborne(scene.LevelObjects);
+        // update airborne
+        _playerState.IsAirborne = IsPlayerAirborne();
+
+        // update dash
         if (CanDashBeReplenished()) _playerState.CanDash = true;
 
+        // update cling
+        if (!_playerState.Abilities.HasCling) return;
+
         _playerState.ClingState = ClingState.None;
-        bool clingedLeft = CheckIfClingedLeft(scene.LevelObjects);
-        bool clingedRight = CheckIfClingedRight(scene.LevelObjects);
+        bool clingedLeft = CheckIfClingedLeft();
+        bool clingedRight = CheckIfClingedRight();
 
         if (clingedLeft && _playerState.IsAirborne) _playerState.ClingState = ClingState.Left;
         if (clingedRight && _playerState.IsAirborne) _playerState.ClingState = ClingState.Right;
     }
-    private void CheckKeystrokes(Scene scene)
+    private void CheckKeystrokes()
     {
         // dashing
         if (Core.Input.Keyboard.WasKeyJustPressed(Keys.C))
@@ -126,11 +150,11 @@ public class Player : Entity
         }
         if (Core.Input.Keyboard.IsKeyUp(Keys.Down) && _playerState.IsCrouched)
         {
-            AttemptUncrouch(scene);
+            AttemptUncrouch();
         }
     }
 
-    private void UpdateXPosition(GameTime gameTime, Scene scene)
+    private void UpdateXPosition(GameTime gameTime)
     {
         switch (_playerState.State)
         {
@@ -144,14 +168,14 @@ public class Player : Entity
 
         Position.X += Velocity.X;
         UpdateHitbox();
-        HandleHorizontalCollision(scene.LevelObjects);
+        HandleHorizontalCollision();
     }
-    private void UpdateYPosition(GameTime gameTime, Scene scene)
+    private void UpdateYPosition(GameTime gameTime)
     {
-        UpdateYVelocity(scene);
+        UpdateYVelocity();
         Position.Y += Velocity.Y;
         UpdateHitbox();
-        HandleVerticalCollision(scene.LevelObjects);
+        HandleVerticalCollision();
     }
 
     private void UpdateXVelocity(GameTime gameTime)
@@ -182,18 +206,18 @@ public class Player : Entity
             Velocity.X = 0;
         }
     }
-    private void UpdateYVelocity(Scene scene)
+    private void UpdateYVelocity()
     {
         // jumping
         if (Core.Input.Keyboard.WasKeyJustPressed(Keys.Z))
         {            
             if (!_playerState.IsAirborne || _cheats.InfiniteJump)
             {
-                Jump(scene);
+                Jump();
             }
             else if (_playerState.ClingState != ClingState.None)
             {
-                WallJump(scene);
+                WallJump();
             }
         }
 
@@ -205,11 +229,11 @@ public class Player : Entity
         }
     }
 
-    private void Jump(Scene scene)
+    private void Jump()
     {
         if (_playerState.IsCrouched)
         {
-            AttemptUncrouch(scene);
+            AttemptUncrouch();
         }
 
         const float y_speed = 10;
@@ -240,8 +264,10 @@ public class Player : Entity
 
         
     }
-    private void WallJump(Scene scene)
+    private void WallJump()
     {
+        if (!_playerState.Abilities.HasCling) return;
+
         if (_playerState.ClingState == ClingState.Left)
         {
             _playerState.DirectionFacing = Direction.Left;
@@ -251,7 +277,7 @@ public class Player : Entity
             _playerState.DirectionFacing = Direction.Right;
         }
 
-        Jump(scene);
+        Jump();
         _playerState.WallJumpTimeRemaining = 0.1f;
     }
     private void UpdateWallJump(GameTime gameTime)
@@ -275,9 +301,9 @@ public class Player : Entity
         }
     }
 
-    private void HandleHorizontalCollision(List<ICollidable> colliders)
+    private void HandleHorizontalCollision()
     {
-        foreach (ICollidable collider in colliders)
+        foreach (ICollidable collider in Scene.LevelObjects)
         {
             if (SweptAABB(GetPreviousHitbox(), GetHitbox(), collider.GetHitbox()))
             {
@@ -297,9 +323,9 @@ public class Player : Entity
             }
         }
     }
-    private void HandleVerticalCollision(List<ICollidable> colliders)
+    private void HandleVerticalCollision()
     {
-        foreach (ICollidable collider in colliders)
+        foreach (ICollidable collider in Scene.LevelObjects)
         {
             if (SweptAABB(GetPreviousHitbox(), GetHitbox(), collider.GetHitbox()))
             {
@@ -322,18 +348,25 @@ public class Player : Entity
 
     private void Dash()
     {
-        if (_playerState.ClingState == ClingState.Left)
+        if (!_playerState.Abilities.HasDash) return;
+
+        if (_playerState.Abilities.HasCling)
         {
-            _playerState.DirectionFacing = Direction.Left;
-        }
-        if (_playerState.ClingState == ClingState.Right)
-        {
-            _playerState.DirectionFacing = Direction.Right;
+            if (_playerState.ClingState == ClingState.Left)
+            {
+                _playerState.DirectionFacing = Direction.Left;
+            }
+            if (_playerState.ClingState == ClingState.Right)
+            {
+                _playerState.DirectionFacing = Direction.Right;
+            }
         }
 
         _playerState.State = State.Dashing;
         _playerState.DashTimeRemaining = 0.1f;
         _playerState.CanDash = false;
+
+        if (Core.Input.Keyboard.IsKeyDown(Keys.Down)) Crouch();
     }
     private void UpdateDash(GameTime gameTime)
     {
@@ -355,6 +388,8 @@ public class Player : Entity
         {
             _playerState.State = State.Normal;
             _playerState.DashTimeRemaining = -1;
+
+            if (_playerState.IsCrouched) AttemptUncrouch();
         }
     }
     private bool CanDashBeReplenished()
@@ -362,36 +397,36 @@ public class Player : Entity
         return !_playerState.IsAirborne || (_playerState.State != State.Dashing && _playerState.ClingState != ClingState.None);
     }
 
-    private bool IsPlayerAirborne(List<ICollidable> colliders)
+    private bool IsPlayerAirborne()
     {
         Rectangle hitboxForFloorCollision = GetHitbox();
         hitboxForFloorCollision.Offset(0, 1);
         
-        foreach (ICollidable collider in colliders)
+        foreach (ICollidable collider in Scene.LevelObjects)
         {
             if (hitboxForFloorCollision.Intersects(collider.GetHitbox())) return false;
         }
 
         return true;
     }
-    private bool CheckIfClingedLeft(List<ICollidable> colliders)
+    private bool CheckIfClingedLeft()
     {
         Rectangle leftWall = GetHitbox();
         leftWall.Offset(1, 0);
 
-        foreach (ICollidable collider in colliders)
+        foreach (ICollidable collider in Scene.LevelObjects)
         {
             if (leftWall.Intersects(collider.GetHitbox())) return true;
         }
 
         return false;
     }
-    private bool CheckIfClingedRight(List<ICollidable> colliders)
+    private bool CheckIfClingedRight()
     {
         Rectangle rightWall = GetHitbox();
         rightWall.Offset(-1, 0);
 
-        foreach (ICollidable collider in colliders)
+        foreach (ICollidable collider in Scene.LevelObjects)
         {
             if (rightWall.Intersects(collider.GetHitbox())) return true;
         }
@@ -401,15 +436,17 @@ public class Player : Entity
 
     private void Crouch()
     {
+        if (!_playerState.Abilities.HasCrouch) return;
+
         _playerState.IsCrouched = true;
         GenerateHitbox(30, 30, Hitbox.Alignment);
     }
 
-    private bool AttemptUncrouch(Scene scene)
+    private bool AttemptUncrouch()
     {
         Uncrouch();
 
-        foreach (ICollidable collider in scene.LevelObjects)
+        foreach (ICollidable collider in Scene.LevelObjects)
         {
             if (AABB(GetHitbox(), collider.GetHitbox()))
             {

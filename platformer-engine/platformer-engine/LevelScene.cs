@@ -17,7 +17,7 @@ public class LevelScene : Scene
 
     public override void Initialize()
     {
-        _player = new();
+        _player = new(this, new Vector2(200, 200));
 
         base.Initialize();
     }
@@ -67,7 +67,7 @@ public class LevelScene : Scene
 
     public override void Update(GameTime gameTime)
     {
-        _player.Update(gameTime, this);
+        _player.Update(gameTime);
     }
 
     public override void Draw(GameTime gameTime)

@@ -79,6 +79,4 @@ public abstract class Collider(Vector2 position)
 
         Hitbox.LoadHitbox(hitbox);
     }
-
-    public abstract void Update(GameTime gameTime, Scene scene);
 }

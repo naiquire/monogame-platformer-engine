@@ -1,5 +1,4 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 
 namespace lib.Input;
 
@@ -19,6 +18,11 @@ public class InputManager
     /// Gets the state information of a gamepad.
     /// </summary>
     public GamePadInfo[] GamePads { get; private set; }
+
+    /// <summary>
+    /// Encapsulates all input methods into a single class. Accesses inputs by a common response rather than a common trigger. 
+    /// </summary>
+    public InputBindings InputBindings { get; private set; }
 
     /// <summary>
     /// Creates a new InputManager.
