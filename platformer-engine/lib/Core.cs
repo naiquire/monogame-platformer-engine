@@ -52,7 +52,7 @@ public class Core : Game
     /// <summary>
     /// Gets a reference to the input management system.
     /// </summary>
-    public static InputBindings Input { get; private set; }
+    public static InputManager InputManager { get; private set; }
     
     /// <summary>
     /// Gets a reference to the audio control system.
@@ -121,7 +121,7 @@ public class Core : Game
         SpriteBatch = new SpriteBatch(GraphicsDevice);
 
         // Create a new input manager.
-        Input = new InputBindings();
+        InputManager = new InputManager();
 
         // Create a new audio controller.
         Audio = new AudioController();
@@ -146,12 +146,12 @@ public class Core : Game
     protected override void Update(GameTime gameTime)
     {
         // Update the input manager.
-        Input.Update(gameTime);
+        InputManager.Update(gameTime);
 
         // Update the audio controller.
         Audio.Update();
 
-        if (ExitOnEscape && Input.Devices.Keyboard.WasKeyJustPressed(Keys.Escape))
+        if (ExitOnEscape && InputManager.Keyboard.WasKeyJustPressed(Keys.Escape))
         {
             Exit();
         }

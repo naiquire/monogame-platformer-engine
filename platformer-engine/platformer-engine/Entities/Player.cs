@@ -7,10 +7,10 @@ using lib.Colliders;
 using lib.Scenes;
 using System;
 using lib.Input;
+using System.Runtime.CompilerServices;
 
 /// <summary> todo
 /// probably rewrite Player.cs from scratch with better implementations of states
-/// write keybindings library
 /// </summary>
 
 namespace Entities;
@@ -27,7 +27,10 @@ public enum ClingState
 {
     None, Left, Right
 }
-
+public enum PlayerAction
+{
+    Up, Down, Left, Right, Jump, Dash
+}
 public record Abilities
 {
     public bool HasDash;
@@ -60,6 +63,7 @@ public class Player : Entity
     private readonly Cheats _cheats;
     private readonly Vector2 _gravity;
     private readonly int PlayerIndex;
+    public static InputController<PlayerAction> Input { get; private set; }
 
     public Player(Scene scene, Vector2 position) : base(scene, position)
     {
@@ -86,10 +90,22 @@ public class Player : Entity
             InfiniteDash = false
         };
 
+        Input = new InputController<PlayerAction>();
         _gravity = new(0, 0.5f);
         PlayerIndex = 0;
 
         GenerateHitbox(30, 60, Alignment.Bottom);
+    }
+
+    public void Initialize()
+    {
+        Input.SetBinding(PlayerAction.Up, new ActionBindings([Keys.Up], [], []));
+        Input.SetBinding(PlayerAction.Down, new ActionBindings([Keys.Down], [], []));
+        Input.SetBinding(PlayerAction.Left, new ActionBindings([Keys.Left], [], []));
+        Input.SetBinding(PlayerAction.Right, new ActionBindings([Keys.Right], [], []));
+
+        Input.SetBinding(PlayerAction.Dash, new ActionBindings([Keys.C], [], []));
+        Input.SetBinding(PlayerAction.Jump, new ActionBindings([Keys.Z], [], []));
     }
 
     public override void Update(GameTime gameTime)
@@ -138,7 +154,7 @@ public class Player : Entity
     private void CheckKeystrokes()
     {
         // dashing
-        if (Core.Input.WasActionJustPressed(PlayerAction.Dash))
+        if (Input.WasActionJustPressed(PlayerAction.Dash))
         {
             if (_playerState.DashTimeRemaining == -1 && (_playerState.CanDash || _cheats.InfiniteDash))
             {
@@ -147,11 +163,11 @@ public class Player : Entity
         }
 
         // crouch
-        if (Core.Input.IsActionPressed(PlayerAction.Down) && !_playerState.IsAirborne)
+        if (Input.IsActionPressed(PlayerAction.Down) && !_playerState.IsAirborne)
         {
             Crouch();
         }
-        if (Core.Input.IsActionReleased(PlayerAction.Down) && _playerState.IsCrouched)
+        if (Input.IsActionReleased(PlayerAction.Down) && _playerState.IsCrouched)
         {
             AttemptUncrouch();
         }
@@ -192,8 +208,8 @@ public class Player : Entity
         const float x_speed = 10;
 
         // horizontal movement
-        bool leftKeyPressed = Core.Input.IsActionPressed(PlayerAction.Left);
-        bool rightKeyPressed = Core.Input.IsActionPressed(PlayerAction.Right);
+        bool leftKeyPressed = Input.IsActionPressed(PlayerAction.Left);
+        bool rightKeyPressed = Input.IsActionPressed(PlayerAction.Right);
         if (leftKeyPressed && !rightKeyPressed)
         {
             Velocity.X = -x_speed;
@@ -212,7 +228,7 @@ public class Player : Entity
     private void UpdateYVelocity()
     {
         // jumping
-        if (Core.Input.WasActionJustPressed(PlayerAction.Jump))
+        if (Input.WasActionJustPressed(PlayerAction.Jump))
         {            
             if (!_playerState.IsAirborne || _cheats.InfiniteJump)
             {
@@ -226,9 +242,19 @@ public class Player : Entity
 
         // handle gravity
         if (_playerState.IsAirborne) Velocity += _gravity;
-        if (Velocity.Y > 20)
+        if (_playerState.ClingState == ClingState.None)
         {
-            Velocity.Y = 20;
+            if (Velocity.Y > 20)
+            {
+                Velocity.Y = 20;
+            }
+        }
+        else
+        {
+            if (Velocity.Y > 5)
+            {
+                Velocity.Y = 5;
+            }
         }
     }
 
@@ -244,8 +270,8 @@ public class Player : Entity
         if (_cheats.Noclip)
         {
             // vertical movement
-            bool upKeyPressed = Core.Input.IsActionPressed(PlayerAction.Up);
-            bool downKeyPressed = Core.Input.IsActionPressed(PlayerAction.Down);
+            bool upKeyPressed = Input.IsActionPressed(PlayerAction.Up);
+            bool downKeyPressed = Input.IsActionPressed(PlayerAction.Down);
             if (upKeyPressed && !downKeyPressed)
             {
                 Velocity.Y = -y_speed;
@@ -369,7 +395,7 @@ public class Player : Entity
         _playerState.DashTimeRemaining = 0.1f;
         _playerState.CanDash = false;
 
-        if (Core.Input.IsActionPressed(PlayerAction.Down)) Crouch();
+        if (Input.IsActionPressed(PlayerAction.Down)) Crouch();
     }
     private void UpdateDash(GameTime gameTime)
     {
@@ -414,6 +440,8 @@ public class Player : Entity
     }
     private bool CheckIfClingedLeft()
     {
+        if (_playerState.DirectionFacing == Direction.Left) return false;
+
         Rectangle leftWall = GetHitbox();
         leftWall.Offset(1, 0);
 
@@ -426,6 +454,8 @@ public class Player : Entity
     }
     private bool CheckIfClingedRight()
     {
+        if (_playerState.DirectionFacing == Direction.Right) return false;
+
         Rectangle rightWall = GetHitbox();
         rightWall.Offset(-1, 0);
 

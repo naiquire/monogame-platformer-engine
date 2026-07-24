@@ -18,6 +18,7 @@ public class LevelScene : Scene
     public override void Initialize()
     {
         _player = new(this, new Vector2(200, 200));
+        _player.Initialize();
 
         base.Initialize();
     }
