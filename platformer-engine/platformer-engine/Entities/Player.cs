@@ -6,6 +6,7 @@ using lib.Colliders.Entities;
 using lib.Colliders;
 using lib.Scenes;
 using System;
+using lib.Input;
 
 /// <summary> todo
 /// probably rewrite Player.cs from scratch with better implementations of states
@@ -58,6 +59,7 @@ public class Player : Entity
     private readonly PlayerState _playerState;
     private readonly Cheats _cheats;
     private readonly Vector2 _gravity;
+    private readonly int PlayerIndex;
 
     public Player(Scene scene, Vector2 position) : base(scene, position)
     {
@@ -85,6 +87,7 @@ public class Player : Entity
         };
 
         _gravity = new(0, 0.5f);
+        PlayerIndex = 0;
 
         GenerateHitbox(30, 60, Alignment.Bottom);
     }
@@ -135,7 +138,7 @@ public class Player : Entity
     private void CheckKeystrokes()
     {
         // dashing
-        if (Core.Input.Keyboard.WasKeyJustPressed(Keys.C))
+        if (Core.Input.WasActionJustPressed(PlayerAction.Dash))
         {
             if (_playerState.DashTimeRemaining == -1 && (_playerState.CanDash || _cheats.InfiniteDash))
             {
@@ -144,11 +147,11 @@ public class Player : Entity
         }
 
         // crouch
-        if (Core.Input.Keyboard.IsKeyDown(Keys.Down) && !_playerState.IsAirborne)
+        if (Core.Input.IsActionPressed(PlayerAction.Down) && !_playerState.IsAirborne)
         {
             Crouch();
         }
-        if (Core.Input.Keyboard.IsKeyUp(Keys.Down) && _playerState.IsCrouched)
+        if (Core.Input.IsActionReleased(PlayerAction.Down) && _playerState.IsCrouched)
         {
             AttemptUncrouch();
         }
@@ -189,8 +192,8 @@ public class Player : Entity
         const float x_speed = 10;
 
         // horizontal movement
-        bool leftKeyPressed = Core.Input.Keyboard.IsKeyDown(Keys.Left);
-        bool rightKeyPressed = Core.Input.Keyboard.IsKeyDown(Keys.Right);
+        bool leftKeyPressed = Core.Input.IsActionPressed(PlayerAction.Left);
+        bool rightKeyPressed = Core.Input.IsActionPressed(PlayerAction.Right);
         if (leftKeyPressed && !rightKeyPressed)
         {
             Velocity.X = -x_speed;
@@ -209,7 +212,7 @@ public class Player : Entity
     private void UpdateYVelocity()
     {
         // jumping
-        if (Core.Input.Keyboard.WasKeyJustPressed(Keys.Z))
+        if (Core.Input.WasActionJustPressed(PlayerAction.Jump))
         {            
             if (!_playerState.IsAirborne || _cheats.InfiniteJump)
             {
@@ -241,8 +244,8 @@ public class Player : Entity
         if (_cheats.Noclip)
         {
             // vertical movement
-            bool upKeyPressed = Core.Input.Keyboard.IsKeyDown(Keys.Up);
-            bool downKeyPressed = Core.Input.Keyboard.IsKeyDown(Keys.Down);
+            bool upKeyPressed = Core.Input.IsActionPressed(PlayerAction.Up);
+            bool downKeyPressed = Core.Input.IsActionPressed(PlayerAction.Down);
             if (upKeyPressed && !downKeyPressed)
             {
                 Velocity.Y = -y_speed;
@@ -366,7 +369,7 @@ public class Player : Entity
         _playerState.DashTimeRemaining = 0.1f;
         _playerState.CanDash = false;
 
-        if (Core.Input.Keyboard.IsKeyDown(Keys.Down)) Crouch();
+        if (Core.Input.IsActionPressed(PlayerAction.Down)) Crouch();
     }
     private void UpdateDash(GameTime gameTime)
     {

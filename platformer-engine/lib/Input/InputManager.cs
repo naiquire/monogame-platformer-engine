@@ -20,11 +20,6 @@ public class InputManager
     public GamePadInfo[] GamePads { get; private set; }
 
     /// <summary>
-    /// Encapsulates all input methods into a single class. Accesses inputs by a common response rather than a common trigger. 
-    /// </summary>
-    public InputBindings InputBindings { get; private set; }
-
-    /// <summary>
     /// Creates a new InputManager.
     /// </summary>
     public InputManager()
