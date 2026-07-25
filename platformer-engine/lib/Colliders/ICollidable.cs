@@ -6,5 +6,6 @@ public interface ICollidable
 {
     Rectangle GetHitbox();
     void GenerateHitbox(int width, int height, Alignment alignment);
-    void UpdateHitbox();
+    void UpdateHitbox(Vector2 position);
+    void UpdateHitbox(float X, float Y);
 }

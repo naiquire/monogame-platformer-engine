@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using Microsoft.Xna.Framework;
-using lib.Scenes;
 using lib.Colliders.Entities;
 
 namespace lib.Colliders;
@@ -48,35 +47,54 @@ public abstract class Collider(Vector2 position)
         }
 
         Hitbox = new(width, height, alignment);
-        UpdateHitbox();
+        UpdateHitbox(Position);
     }
 
     /// <summary>
-    /// Updates the rectangular region representing the Collider's hitbox to its current position.
+    /// Updates the rectangular region representing the Collider's hitbox to the provided position.
     /// </summary>
     /// <exception cref="InvalidEnumArgumentException"></exception>
-    public void UpdateHitbox()
+    public void UpdateHitbox(Vector2 position)
     {
         int width = Hitbox.Width;
         int height = Hitbox.Height;
 
         Rectangle hitbox = Hitbox.Alignment switch
         {
-            Alignment.TopLeft => new((int)Position.X, (int)Position.Y, width, height),
-            Alignment.Top => new((int)Position.X - width / 2, (int)Position.Y, width, height),
-            Alignment.TopRight => new((int)Position.X - width, (int)Position.Y, width, height),
+            Alignment.TopLeft => new((int)position.X, (int)position.Y, width, height),
+            Alignment.Top => new((int)position.X - width / 2, (int)position.Y, width, height),
+            Alignment.TopRight => new((int)position.X - width, (int)position.Y, width, height),
 
-            Alignment.Left => new((int)Position.X, (int)Position.Y - height / 2, width, height),
-            Alignment.Center => new((int)Position.X - width / 2, (int)Position.Y - height / 2, width, height),
-            Alignment.Right => new((int)Position.X - width, (int)Position.Y - height / 2, width, height),
+            Alignment.Left => new((int)position.X, (int)position.Y - height / 2, width, height),
+            Alignment.Center => new((int)position.X - width / 2, (int)position.Y - height / 2, width, height),
+            Alignment.Right => new((int)position.X - width, (int)position.Y - height / 2, width, height),
 
-            Alignment.BottomLeft => new((int)Position.X, (int)Position.Y - height, width, height),
-            Alignment.Bottom => new((int)Position.X - width / 2, (int)Position.Y - height, width, height),
-            Alignment.BottomRight => new((int)Position.X - width, (int)Position.Y - height, width, height),
+            Alignment.BottomLeft => new((int)position.X, (int)position.Y - height, width, height),
+            Alignment.Bottom => new((int)position.X - width / 2, (int)position.Y - height, width, height),
+            Alignment.BottomRight => new((int)position.X - width, (int)position.Y - height, width, height),
 
             _ => throw new InvalidEnumArgumentException()
         };
 
         Hitbox.LoadHitbox(hitbox);
+    }
+
+    /// <summary>
+    /// Updates the rectangular region representing the Collider's hitbox to the provided X and Y position.
+    /// </summary>
+    /// <exception cref="InvalidEnumArgumentException"></exception>
+    public void UpdateHitbox(float X, float Y)
+    {
+        UpdateHitbox(new Vector2(X, Y));
+    }
+
+    public static bool AABB(Rectangle hitbox, Rectangle obj)
+    {
+        return obj.Intersects(hitbox);
+    }
+    public static bool SweptAABB(Rectangle currentHitbox, Rectangle newHitbox, Rectangle obj)
+    {
+        Rectangle union = Rectangle.Union(currentHitbox, newHitbox);
+        return obj.Intersects(union);
     }
 }

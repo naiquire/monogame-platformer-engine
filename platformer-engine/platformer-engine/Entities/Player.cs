@@ -1,104 +1,104 @@
-using System.Collections.Generic;
+using System;
+using System.ComponentModel;
+using lib.Colliders;
+using lib.Colliders.Entities;
+using lib.Input;
+using lib.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using lib;
-using lib.Colliders.Entities;
-using lib.Colliders;
-using lib.Scenes;
-using System;
-using lib.Input;
-using System.Runtime.CompilerServices;
-
-/// <summary> todo
-/// probably rewrite Player.cs from scratch with better implementations of states
-/// </summary>
 
 namespace Entities;
 
-public enum Direction
+enum Direction
 {
     Up, Down, Left, Right
 }
-public enum State
+enum DashState
 {
-    Normal, Dashing
+    None, Dashing
 }
-public enum ClingState
+enum ClingState
 {
     None, Left, Right
 }
-public enum PlayerAction
+enum CrouchState
+{
+    None, Crouching
+}
+enum PlayerAction
 {
     Up, Down, Left, Right, Jump, Dash
 }
-public record Abilities
-{
-    public bool HasDash;
-    public bool HasCrouch;
-    public bool HasCling;
-}
 
-public record PlayerState
-{
-    public State State;
-    public Abilities Abilities;
-    public ClingState ClingState;
-    public Direction DirectionFacing;
-    public double DashTimeRemaining;
-    public double WallJumpTimeRemaining;
-    public bool IsAirborne;
-    public bool CanDash;
-    public bool IsCrouched;
-}
-public record Cheats
-{
-    public bool Noclip;
-    public bool InfiniteJump;
-    public bool InfiniteDash;
-}
 
-public class Player : Entity
+public class Player(Scene scene, Vector2 position) : Entity(scene, position)
 {
-    private readonly PlayerState _playerState;
-    private readonly Cheats _cheats;
-    private readonly Vector2 _gravity;
-    private readonly int PlayerIndex;
-    public static InputController<PlayerAction> Input { get; private set; }
-
-    public Player(Scene scene, Vector2 position) : base(scene, position)
+    private struct PlayerInfo
     {
-        _playerState = new()
-        {
-            State = State.Normal,
-            Abilities = new Abilities
-            { 
-                HasDash = true,
-                HasCrouch = true,
-                HasCling = true
-            },
-            DirectionFacing = Direction.Right,
-            IsAirborne = true,
-            CanDash = false,
-            DashTimeRemaining = -1,
-            IsCrouched = false,
-            ClingState = ClingState.None
-        };
-        _cheats = new()
-        {
-            Noclip = false,
-            InfiniteJump = false,
-            InfiniteDash = false
-        };
-
-        Input = new InputController<PlayerAction>();
-        _gravity = new(0, 0.5f);
-        PlayerIndex = 0;
-
-        GenerateHitbox(30, 60, Alignment.Bottom);
+        public DashInfo Dash;
+        public ClingInfo Cling;
+        public CrouchState CrouchState;
+        public bool IsAirborne;
+        public Direction DirectionFacing;
     }
+    private struct DashInfo
+    {
+        public DashState DashState;
+        public bool IsDashAvailable;
+        public double DashTimeRemaining;
+        public DashInfo()
+        {
+            DashState = DashState.None;
+            IsDashAvailable = false;
+            DashTimeRemaining = -1;
+        }
+    }
+    private struct ClingInfo
+    {
+        public ClingState ClingState;
+        public double WallJumpTimeRemaining;
+        public ClingInfo()
+        {
+            ClingState = ClingState.None;
+            WallJumpTimeRemaining = -1;
+        }
+        public readonly Direction InvertDirection()
+        {
+            if (ClingState == ClingState.Left)
+            {
+                return Direction.Left;
+            }
+            if (ClingState == ClingState.Right)
+            {
+                return Direction.Right;
+            }
+
+            throw new InvalidEnumArgumentException("Player must be clinged to a wall.");
+        }
+    }
+
+    private readonly int PlayerIndex;
+    private PlayerInfo _playerState;
+    private InputController<PlayerAction> Input;
 
     public void Initialize()
     {
+        _playerState = new()
+        {
+            Dash = new(),
+            Cling = new(),
+            CrouchState = CrouchState.None,
+            IsAirborne = true,
+            DirectionFacing = Direction.Right
+        };
+
+        InitializeKeybindings();
+        GenerateHitbox(30, 60, Alignment.Bottom);
+    }
+    private void InitializeKeybindings()
+    {
+        Input = new InputController<PlayerAction>();
+
         Input.SetBinding(PlayerAction.Up, new ActionBindings([Keys.Up], [], []));
         Input.SetBinding(PlayerAction.Down, new ActionBindings([Keys.Down], [], []));
         Input.SetBinding(PlayerAction.Left, new ActionBindings([Keys.Left], [], []));
@@ -108,322 +108,215 @@ public class Player : Entity
         Input.SetBinding(PlayerAction.Jump, new ActionBindings([Keys.Z], [], []));
     }
 
-    public override void Update(GameTime gameTime)
+    private void UpdateState()
     {
-        switch (_playerState.State)
-        {
-            case State.Normal:
-
-                UpdateXPosition(gameTime);
-                UpdateYPosition(gameTime);
-
-                break;
-            case State.Dashing:
-
-                UpdateXPosition(gameTime);
-                
-                break;
-            default:
-                break;
-        }
-
-        CheckKeystrokes();
-        UpdateStates();
-        Console.WriteLine($"{_playerState.State} , {_playerState.DirectionFacing} , {_playerState.ClingState}");
-
-        base.Update(gameTime);
-    }
-    private void UpdateStates()
-    {
-        // update airborne
         _playerState.IsAirborne = IsPlayerAirborne();
 
-        // update dash
-        if (CanDashBeReplenished()) _playerState.CanDash = true;
-
-        // update cling
-        if (!_playerState.Abilities.HasCling) return;
-
-        _playerState.ClingState = ClingState.None;
+        _playerState.Cling.ClingState = ClingState.None;
         bool clingedLeft = CheckIfClingedLeft();
         bool clingedRight = CheckIfClingedRight();
 
-        if (clingedLeft && _playerState.IsAirborne) _playerState.ClingState = ClingState.Left;
-        if (clingedRight && _playerState.IsAirborne) _playerState.ClingState = ClingState.Right;
-    }
-    private void CheckKeystrokes()
-    {
-        // dashing
-        if (Input.WasActionJustPressed(PlayerAction.Dash))
+        if (clingedLeft && _playerState.IsAirborne) _playerState.Cling.ClingState = ClingState.Left;
+        if (clingedRight && _playerState.IsAirborne) _playerState.Cling.ClingState = ClingState.Right;
+
+        if (!_playerState.IsAirborne || _playerState.Cling.ClingState != ClingState.None)
         {
-            if (_playerState.DashTimeRemaining == -1 && (_playerState.CanDash || _cheats.InfiniteDash))
-            {
-                Dash();
-            }
+            _playerState.Dash.IsDashAvailable = true;
         }
 
-        // crouch
-        if (Input.IsActionPressed(PlayerAction.Down) && !_playerState.IsAirborne)
-        {
-            Crouch();
-        }
-        if (Input.IsActionReleased(PlayerAction.Down) && _playerState.IsCrouched)
-        {
-            AttemptUncrouch();
-        }
+        Console.WriteLine($"Dash:{_playerState.Dash.DashState},{_playerState.Dash.IsDashAvailable && _playerState.Dash.DashTimeRemaining == -1} Dir:{_playerState.DirectionFacing} Cling:{_playerState.Cling.ClingState} Fly:{_playerState.IsAirborne}");
     }
-
-    private void UpdateXPosition(GameTime gameTime)
+    public override void Update(GameTime gameTime)
     {
-        switch (_playerState.State)
+        bool crouchInputted = Input.IsActionPressed(PlayerAction.Down);
+        if (crouchInputted && !_playerState.IsAirborne) Crouch();
+
+        bool uncrouchInputted = Input.IsActionReleased(PlayerAction.Down);
+        if (uncrouchInputted) Uncrouch();
+
+        bool dashInputted = Input.WasActionJustPressed(PlayerAction.Dash);
+        if (dashInputted) RequestDash(crouchInputted);
+
+        switch (_playerState.Dash.DashState)
         {
-            case State.Normal:
-                UpdateXVelocity(gameTime);
+            case DashState.None:
+                Position.X = UpdateHorizontalPosition(gameTime);
+                UpdateHitbox(Position);
+
+                Position.Y = UpdateVerticalPosition(gameTime);
+                UpdateHitbox(Position);
+
+                UpdateWallJump(gameTime);
+
                 break;
-            case State.Dashing:
-                UpdateDash(gameTime);
-                break;
-        }
-
-        Position.X += Velocity.X;
-        UpdateHitbox();
-        HandleHorizontalCollision();
-    }
-    private void UpdateYPosition(GameTime gameTime)
-    {
-        UpdateYVelocity();
-        Position.Y += Velocity.Y;
-        UpdateHitbox();
-        HandleVerticalCollision();
-    }
-
-    private void UpdateXVelocity(GameTime gameTime)
-    {
-        if (_playerState.WallJumpTimeRemaining > 0)
-        {
-            UpdateWallJump(gameTime);
-            return;
-        }
-
-        const float x_speed = 10;
-
-        // horizontal movement
-        bool leftKeyPressed = Input.IsActionPressed(PlayerAction.Left);
-        bool rightKeyPressed = Input.IsActionPressed(PlayerAction.Right);
-        if (leftKeyPressed && !rightKeyPressed)
-        {
-            Velocity.X = -x_speed;
-            _playerState.DirectionFacing = Direction.Left;
-        }
-        else if (!leftKeyPressed && rightKeyPressed)
-        {
-            Velocity.X = x_speed;
-            _playerState.DirectionFacing = Direction.Right;
-        }
-        else
-        {
-            Velocity.X = 0;
-        }
-    }
-    private void UpdateYVelocity()
-    {
-        // jumping
-        if (Input.WasActionJustPressed(PlayerAction.Jump))
-        {            
-            if (!_playerState.IsAirborne || _cheats.InfiniteJump)
-            {
-                Jump();
-            }
-            else if (_playerState.ClingState != ClingState.None)
-            {
-                WallJump();
-            }
-        }
-
-        // handle gravity
-        if (_playerState.IsAirborne) Velocity += _gravity;
-        if (_playerState.ClingState == ClingState.None)
-        {
-            if (Velocity.Y > 20)
-            {
-                Velocity.Y = 20;
-            }
-        }
-        else
-        {
-            if (Velocity.Y > 5)
-            {
-                Velocity.Y = 5;
-            }
-        }
-    }
-
-    private void Jump()
-    {
-        if (_playerState.IsCrouched)
-        {
-            AttemptUncrouch();
-        }
-
-        const float y_speed = 10;
-
-        if (_cheats.Noclip)
-        {
-            // vertical movement
-            bool upKeyPressed = Input.IsActionPressed(PlayerAction.Up);
-            bool downKeyPressed = Input.IsActionPressed(PlayerAction.Down);
-            if (upKeyPressed && !downKeyPressed)
-            {
-                Velocity.Y = -y_speed;
-            }
-            else if (!upKeyPressed && downKeyPressed)
-            {
-                Velocity.Y = y_speed;
-            }
-            else
-            {
+            case DashState.Dashing:
+                Position.X = UpdateDash(gameTime);
                 Velocity.Y = 0;
-            }
-
-            return;
+                UpdateHitbox(Position);
+                
+                break;
         }
 
-        Velocity.Y = -y_speed;
-        _playerState.IsAirborne = true;
-
-        
+        UpdateState();
+        base.Update(gameTime);
     }
-    private void WallJump()
-    {
-        if (!_playerState.Abilities.HasCling) return;
 
-        if (_playerState.ClingState == ClingState.Left)
-        {
-            _playerState.DirectionFacing = Direction.Left;
-        }
-        if (_playerState.ClingState == ClingState.Right)
+    /// <summary>
+    /// Calculates the new horizontal position of the player, and updates the direction which the player is facing.
+    /// </summary>
+    /// <returns>The new horizontal position of the player.</returns>
+    private float UpdateHorizontalPosition(GameTime gameTime)
+    {
+        float horizontalPosition;
+
+        Velocity.X = UpdateHorizontalVelocity(gameTime);
+        if (Velocity.X > 0)
         {
             _playerState.DirectionFacing = Direction.Right;
         }
-
-        Jump();
-        _playerState.WallJumpTimeRemaining = 0.1f;
-    }
-    private void UpdateWallJump(GameTime gameTime)
-    {
-        const float x_speed = 10;
-
-        if (_playerState.DirectionFacing == Direction.Left)
+        if (Velocity.X < 0)
         {
-            Velocity.X = -x_speed;
+            _playerState.DirectionFacing = Direction.Left;
         }
-        if (_playerState.DirectionFacing == Direction.Right)
-        {
-            Velocity.X = +x_speed;
-        }
-        
-        _playerState.WallJumpTimeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (_playerState.WallJumpTimeRemaining <= 0)
-        {
-            _playerState.WallJumpTimeRemaining = -1;
-        }
+        horizontalPosition = Position.X + Velocity.X;
+        UpdateHitbox(horizontalPosition, Position.Y);
+        float delta = HandleHorizontalCollision();
+
+        return Position.X + Velocity.X + delta;        
     }
 
-    private void HandleHorizontalCollision()
+    /// <summary>
+    /// Calculates the new horizontal velocity of the player based on user input.
+    /// </summary>
+    /// <returns>The new horizontal velocity of the player.</returns>
+    private float UpdateHorizontalVelocity(GameTime gameTime)
     {
-        foreach (ICollidable collider in Scene.LevelObjects)
+        const float Xspeed = 10f;
+
+        if (_playerState.Cling.WallJumpTimeRemaining != -1)
         {
-            if (SweptAABB(GetPreviousHitbox(), GetHitbox(), collider.GetHitbox()))
+            if (_playerState.DirectionFacing == Direction.Left) return -Xspeed;
+            if (_playerState.DirectionFacing == Direction.Right) return Xspeed;
+            return 0;
+        }
+
+        bool leftInputted = Input.IsActionPressed(PlayerAction.Left);
+        bool rightInputted = Input.IsActionPressed(PlayerAction.Right);
+
+        if (leftInputted && !rightInputted)
+        {
+            return -Xspeed;
+        }
+        if (!leftInputted && rightInputted)
+        {
+            return Xspeed;
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// Calculates the new vertical position of the player.
+    /// </summary>
+    /// <returns>The new vertical position of the player.</returns>
+    private float UpdateVerticalPosition(GameTime gameTime)
+    {
+        float verticalPosition;
+
+        Velocity.Y = UpdateVerticalVelocity(gameTime);
+
+        verticalPosition = Position.Y + Velocity.Y;
+        UpdateHitbox(Position.X, verticalPosition);
+        float delta = HandleVerticalCollision();
+
+        float returnValue = Position.Y + Velocity.Y + delta;
+        if (delta != 0) Velocity.Y = 0;
+        return returnValue;
+    }
+
+    /// <summary>
+    /// Calculates the new vertical velocity of the player based on user input.
+    /// </summary>
+    /// <returns>The new vertical velocity of the player.</returns>
+    private float UpdateVerticalVelocity(GameTime gameTime)
+    {
+        const float gravity = 0.5f;
+        float verticalVelocity = 0;
+
+        bool jumpInputted = Input.WasActionJustPressed(PlayerAction.Jump);
+        if (jumpInputted)
+        {
+            if (RequestJump())
             {
-                if (Velocity.X > 0)
-                {
-                    float distance = Hitbox.Hitbox.Right - collider.GetHitbox().Left;
-                    Position.X -= distance;
-                }
-                if (Velocity.X < 0)
-                {
-                    float distance = collider.GetHitbox().Right - Hitbox.Hitbox.Left;
-                    Position.X += distance;
-                }
-
-                Velocity.X = 0;
-                UpdateHitbox();
+                return -10f;
             }
         }
+        
+        if (_playerState.IsAirborne)
+        {
+            verticalVelocity = Velocity.Y + gravity;
+        }
+
+        if (_playerState.Cling.ClingState == ClingState.None)
+        {
+            verticalVelocity = Math.Min(verticalVelocity, 20);
+        }
+        else
+        {
+            verticalVelocity = Math.Min(verticalVelocity, 5);
+        }
+
+        return verticalVelocity;
     }
-    private void HandleVerticalCollision()
+    
+    private float HandleHorizontalCollision()
     {
+        float horizontalDelta = 0;
+
         foreach (ICollidable collider in Scene.LevelObjects)
         {
-            if (SweptAABB(GetPreviousHitbox(), GetHitbox(), collider.GetHitbox()))
+            Rectangle colliderHitbox = collider.GetHitbox();
+            if (SweptAABB(GetPreviousHitbox(), GetHitbox(), colliderHitbox))
+            {
+                if (_playerState.DirectionFacing == Direction.Right)
+                {
+                    float distance = Hitbox.Hitbox.Right - colliderHitbox.Left;
+                    horizontalDelta = Math.Min(-distance, horizontalDelta);
+                }
+                if (_playerState.DirectionFacing == Direction.Left)
+                {
+                    float distance = colliderHitbox.Right - Hitbox.Hitbox.Left;
+                    horizontalDelta = Math.Max(distance, horizontalDelta);
+                }
+            }
+        }
+
+        return horizontalDelta;
+    }
+    private float HandleVerticalCollision()
+    {
+        float verticalDelta = 0;
+
+        foreach (ICollidable collider in Scene.LevelObjects)
+        {
+            Rectangle colliderHitbox = collider.GetHitbox();
+            if (SweptAABB(GetPreviousHitbox(), GetHitbox(), colliderHitbox))
             {
                 if (Velocity.Y > 0)
                 {
-                    float distance = Hitbox.Hitbox.Bottom - collider.GetHitbox().Top;
-                    Position.Y -= distance;
+                    float distance = Hitbox.Hitbox.Bottom - colliderHitbox.Top;
+                    verticalDelta = Math.Min(-distance, verticalDelta);
                 }
                 if (Velocity.Y < 0)
                 {
-                    float distance = collider.GetHitbox().Bottom - Hitbox.Hitbox.Top;
-                    Position.Y += distance;
+                    float distance = colliderHitbox.Bottom - Hitbox.Hitbox.Top;
+                    verticalDelta = Math.Max(distance, verticalDelta);
                 }
-
-                Velocity.Y = 0;
-                UpdateHitbox();
-            }
-        }
-    }
-
-    private void Dash()
-    {
-        if (!_playerState.Abilities.HasDash) return;
-
-        if (_playerState.Abilities.HasCling)
-        {
-            if (_playerState.ClingState == ClingState.Left)
-            {
-                _playerState.DirectionFacing = Direction.Left;
-            }
-            if (_playerState.ClingState == ClingState.Right)
-            {
-                _playerState.DirectionFacing = Direction.Right;
             }
         }
 
-        _playerState.State = State.Dashing;
-        _playerState.DashTimeRemaining = 0.1f;
-        _playerState.CanDash = false;
-
-        if (Input.IsActionPressed(PlayerAction.Down)) Crouch();
-    }
-    private void UpdateDash(GameTime gameTime)
-    {
-        const float dashSpeed = 30f;
-
-        Velocity.Y = 0;
-        if (_playerState.DirectionFacing == Direction.Left)
-        {
-            Velocity.X = -dashSpeed;
-        }
-        if (_playerState.DirectionFacing == Direction.Right)
-        {
-            Velocity.X = dashSpeed;
-        }
-        
-        _playerState.DashTimeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_playerState.DashTimeRemaining <= 0)
-        {
-            _playerState.State = State.Normal;
-            _playerState.DashTimeRemaining = -1;
-
-            if (_playerState.IsCrouched) AttemptUncrouch();
-        }
-    }
-    private bool CanDashBeReplenished()
-    {
-        return !_playerState.IsAirborne || (_playerState.State != State.Dashing && _playerState.ClingState != ClingState.None);
+        return verticalDelta;
     }
 
     private bool IsPlayerAirborne()
@@ -467,44 +360,108 @@ public class Player : Entity
         return false;
     }
 
-    private void Crouch()
+    private bool RequestJump()
     {
-        if (!_playerState.Abilities.HasCrouch) return;
+        if (!_playerState.IsAirborne)
+        {
+            Uncrouch();
+            return true;
+        }
+        if (_playerState.Cling.ClingState != ClingState.None)
+        {
+            _playerState.Cling.WallJumpTimeRemaining = 0.1f;
+            _playerState.DirectionFacing = _playerState.Cling.InvertDirection();
 
-        _playerState.IsCrouched = true;
-        GenerateHitbox(30, 30, Hitbox.Alignment);
+            return true;
+        }
+
+        return false;
+    }
+    private bool RequestDash(bool crouched)
+    {
+        if (!(_playerState.Dash.IsDashAvailable && _playerState.Dash.DashTimeRemaining == -1))
+        {
+            return false;
+        }
+
+        if (crouched) Crouch();
+
+        if (_playerState.Cling.ClingState != ClingState.None)
+        {
+            _playerState.DirectionFacing = _playerState.Cling.InvertDirection();
+        }
+
+        if (_playerState.IsAirborne)
+        {
+            _playerState.Dash.IsDashAvailable = false;
+        }
+        _playerState.Dash.DashState = DashState.Dashing;
+        _playerState.Dash.DashTimeRemaining = 0.1f;
+
+        return true;
+    }
+    private float UpdateDash(GameTime gameTime)
+    {
+        const float dashSpeed = 30f;
+        float horizontalPosition;
+
+        if (_playerState.DirectionFacing == Direction.Left)
+        {
+            Velocity.X = -dashSpeed;
+        }
+        if (_playerState.DirectionFacing == Direction.Right)
+        {
+            Velocity.X = dashSpeed;
+        }
+        
+        _playerState.Dash.DashTimeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
+        if (_playerState.Dash.DashTimeRemaining <= 0)
+        {
+            _playerState.Dash.DashState = DashState.None;
+            _playerState.Dash.DashTimeRemaining = -1;
+            if (_playerState.IsAirborne) Uncrouch();
+        }
+
+        horizontalPosition = Position.X + Velocity.X;
+        UpdateHitbox(horizontalPosition, Position.Y);
+        float delta = HandleHorizontalCollision();
+
+        return Position.X + Velocity.X + delta;  
     }
 
-    private bool AttemptUncrouch()
+    private void Crouch()
     {
-        Uncrouch();
+        if (_playerState.CrouchState == CrouchState.Crouching) return;
+
+        _playerState.CrouchState = CrouchState.Crouching;
+        GenerateHitbox(30, 30, Hitbox.Alignment);
+    }
+    private void Uncrouch()
+    {
+        if (_playerState.CrouchState == CrouchState.None) return;
+
+        _playerState.CrouchState = CrouchState.None;
+        GenerateHitbox(30, 60, Hitbox.Alignment);
 
         foreach (ICollidable collider in Scene.LevelObjects)
         {
             if (AABB(GetHitbox(), collider.GetHitbox()))
             {
                 Crouch();
-                return false;
+                return;
             }
         }
-
-        return true;
-    }
-    private void Uncrouch()
-    {
-        _playerState.IsCrouched = false;
-        GenerateHitbox(30, 60, Hitbox.Alignment);
     }
 
-    public bool AABB(Rectangle hitbox, Rectangle obj)
+    private void UpdateWallJump(GameTime gameTime)
     {
-        return obj.Intersects(hitbox);
-    }
-    public bool SweptAABB(Rectangle currentHitbox, Rectangle newHitbox, Rectangle obj)
-    {
-        if (_cheats.Noclip) return false;
-
-        Rectangle union = Rectangle.Union(currentHitbox, newHitbox);
-        return obj.Intersects(union);
+        if (_playerState.Cling.WallJumpTimeRemaining != -1)
+        {
+            _playerState.Cling.WallJumpTimeRemaining -= gameTime.ElapsedGameTime.TotalSeconds;
+            if (_playerState.Cling.WallJumpTimeRemaining < 0)
+            {
+                _playerState.Cling.WallJumpTimeRemaining = -1;
+            }
+        }
     }
 }
