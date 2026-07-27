@@ -30,7 +30,6 @@ enum PlayerAction
     Up, Down, Left, Right, Jump, Dash
 }
 
-
 public class Player(Scene scene, Vector2 position) : Entity(scene, position)
 {
     private struct PlayerInfo
@@ -77,7 +76,7 @@ public class Player(Scene scene, Vector2 position) : Entity(scene, position)
         }
     }
 
-    private readonly int PlayerIndex;
+    private readonly int _playerIndex;
     private PlayerInfo _playerState;
     private InputController<PlayerAction> Input;
 

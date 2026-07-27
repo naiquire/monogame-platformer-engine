@@ -95,7 +95,7 @@ public abstract class Scene : IDisposable
     /// </summary>
     /// <param name="disposing">'
     /// Indicates whether managed resources should be disposed.  This value is only true when called from the main
-    /// Dispose method.  When called from the finalizer, this will be false.
+    /// Dispose method. When called from the finalizer, this will be false.
     /// </param>
     protected virtual void Dispose(bool disposing)
     {

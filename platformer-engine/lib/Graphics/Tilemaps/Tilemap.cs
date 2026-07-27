@@ -9,6 +9,10 @@ using lib.Graphics.Textures;
 
 namespace lib.Graphics.Tilemaps;
 
+public enum LayerType
+{
+    Base, Detail
+}
 public class Tilemap
 {
     private readonly Tileset _tileset;
@@ -28,6 +32,11 @@ public class Tilemap
     /// Gets the total number of tiles in this tilemap.
     /// </summary>
     public int Count { get; }
+
+    /// <summary>
+    /// Gets the type of layer of this tilemap.
+    /// </summary>
+    public LayerType LayerType { get; }
 
     /// <summary>
     /// Gets or Sets the scale factor to draw each tile at.
@@ -50,7 +59,7 @@ public class Tilemap
     /// <param name="tileset">The tileset used by this tilemap.</param>
     /// <param name="columns">The total number of columns in this tilemap.</param>
     /// <param name="rows">The total number of rows in this tilemap.</param>
-    public Tilemap(Tileset tileset, int columns, int rows)
+    public Tilemap(Tileset tileset, int columns, int rows, LayerType layerType = LayerType.Base)
     {
         _tileset = tileset;
         Rows = rows;
@@ -132,7 +141,7 @@ public class Tilemap
     /// <param name="content">The content manager used to load the texture for the tileset.</param>
     /// <param name="filename">The path to the xml file, relative to the content root directory.</param>
     /// <returns>The tilemap created by this method.</returns>
-    public static Tilemap FromFile(ContentManager content, string filename)
+    public static Tilemap FromXMLFile(ContentManager content, string filename)
     {
         string filePath = Path.Combine(content.RootDirectory, filename);
 
@@ -226,5 +235,4 @@ public class Tilemap
             }
         }
     }
-
 }
