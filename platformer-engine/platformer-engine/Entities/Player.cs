@@ -110,11 +110,11 @@ public class Player(Scene scene, Vector2 position) : Entity(scene, position)
     private void UpdateState()
     {
         _playerState.IsAirborne = IsPlayerAirborne();
-
-        _playerState.Cling.ClingState = ClingState.None;
+        
         bool clingedLeft = CheckIfClingedLeft();
         bool clingedRight = CheckIfClingedRight();
 
+        _playerState.Cling.ClingState = ClingState.None;
         if (clingedLeft && _playerState.IsAirborne) _playerState.Cling.ClingState = ClingState.Left;
         if (clingedRight && _playerState.IsAirborne) _playerState.Cling.ClingState = ClingState.Right;
 
@@ -333,6 +333,7 @@ public class Player(Scene scene, Vector2 position) : Entity(scene, position)
     private bool CheckIfClingedLeft()
     {
         if (_playerState.DirectionFacing == Direction.Left) return false;
+        if (Input.IsActionReleased(PlayerAction.Right) && _playerState.Dash.DashState == DashState.None && _playerState.Cling.ClingState == ClingState.None) return false;
 
         Rectangle leftWall = GetHitbox();
         leftWall.Offset(1, 0);
@@ -347,6 +348,7 @@ public class Player(Scene scene, Vector2 position) : Entity(scene, position)
     private bool CheckIfClingedRight()
     {
         if (_playerState.DirectionFacing == Direction.Right) return false;
+        if (Input.IsActionReleased(PlayerAction.Left) && _playerState.Dash.DashState == DashState.None && _playerState.Cling.ClingState == ClingState.None) return false;
 
         Rectangle rightWall = GetHitbox();
         rightWall.Offset(-1, 0);

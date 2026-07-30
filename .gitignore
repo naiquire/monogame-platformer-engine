@@ -55,3 +55,6 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# custom
+platformer-engine/lib/Graphics/Tilemaps/levelExample.json
