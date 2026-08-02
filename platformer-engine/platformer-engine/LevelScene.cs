@@ -12,7 +12,7 @@ namespace platformer_engine;
 public class LevelScene : Scene
 {
     private Player _player;
-    private Tilemap _tilemap;
+    private LevelScreen _level;
     public static HitboxViewer HitboxView;
 
     public override void Initialize()
@@ -25,7 +25,12 @@ public class LevelScene : Scene
 
     public override void LoadContent()
     {
+        _level = LevelScreen.FromFile(Core.Content, "Levels/0.json");
+        _level.Scale = 2f * Vector2.One;
+
         HitboxView = new HitboxViewer(Core.GraphicsDevice);
+
+
 
         LevelObject floor = new(new Vector2(100, 650));
         floor.GenerateHitbox(1000, 50);
@@ -47,8 +52,8 @@ public class LevelScene : Scene
         wall4.GenerateHitbox(20, 100);
         LevelObjects.Add(wall4);
 
-        LevelObject wall5 = new(new Vector2(200, 100));
-        wall5.GenerateHitbox(20, 100);
+        LevelObject wall5 = new(new Vector2(200, 60));
+        wall5.GenerateHitbox(20, 120);
         LevelObjects.Add(wall5);
 
         LevelObject walll2 = new(new Vector2(800, 150));
@@ -80,7 +85,7 @@ public class LevelScene : Scene
         Core.SpriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
         // Draw the tilemap.
-        // _tilemap.Draw(SpriteBatch);
+        _level.Draw(Core.SpriteBatch);
 
         HitboxView.DrawHitbox(Core.SpriteBatch, _player.GetHitbox());
         HitboxView.DrawPoint(Core.SpriteBatch, _player.Position);

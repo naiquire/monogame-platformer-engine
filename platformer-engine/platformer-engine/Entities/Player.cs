@@ -77,6 +77,7 @@ public class Player(Scene scene, Vector2 position) : Entity(scene, position)
     }
 
     private readonly int _playerIndex;
+    private Vector2 _playerSize;
     private PlayerInfo _playerState;
     private InputController<PlayerAction> Input;
 
@@ -91,8 +92,9 @@ public class Player(Scene scene, Vector2 position) : Entity(scene, position)
             DirectionFacing = Direction.Right
         };
 
+        _playerSize = new(40, 80);
         InitializeKeybindings();
-        GenerateHitbox(30, 60, Alignment.Bottom);
+        GenerateHitbox((int)_playerSize.X, (int)_playerSize.Y, Alignment.Bottom);
     }
     private void InitializeKeybindings()
     {
@@ -131,7 +133,7 @@ public class Player(Scene scene, Vector2 position) : Entity(scene, position)
         if (crouchInputted && !_playerState.IsAirborne) Crouch();
 
         bool uncrouchInputted = Input.IsActionReleased(PlayerAction.Down);
-        if (uncrouchInputted) Uncrouch();
+        if (uncrouchInputted || _playerState.IsAirborne && _playerState.Dash.DashState == DashState.None) Uncrouch();
 
         bool dashInputted = Input.WasActionJustPressed(PlayerAction.Dash);
         if (dashInputted) RequestDash(crouchInputted);
@@ -365,7 +367,6 @@ public class Player(Scene scene, Vector2 position) : Entity(scene, position)
     {
         if (!_playerState.IsAirborne)
         {
-            Uncrouch();
             return true;
         }
         if (_playerState.Cling.ClingState != ClingState.None)
@@ -435,14 +436,14 @@ public class Player(Scene scene, Vector2 position) : Entity(scene, position)
         if (_playerState.CrouchState == CrouchState.Crouching) return;
 
         _playerState.CrouchState = CrouchState.Crouching;
-        GenerateHitbox(30, 30, Hitbox.Alignment);
+        GenerateHitbox((int)_playerSize.X, (int)_playerSize.Y / 2, Hitbox.Alignment);
     }
     private void Uncrouch()
     {
         if (_playerState.CrouchState == CrouchState.None) return;
 
         _playerState.CrouchState = CrouchState.None;
-        GenerateHitbox(30, 60, Hitbox.Alignment);
+        GenerateHitbox((int)_playerSize.X, (int)_playerSize.Y, Hitbox.Alignment);
 
         foreach (ICollidable collider in Scene.LevelObjects)
         {

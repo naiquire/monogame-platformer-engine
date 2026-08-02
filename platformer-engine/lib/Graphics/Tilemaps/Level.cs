@@ -15,6 +15,23 @@ public class LevelScreen(List<Tilemap> Layers)
     public List<Tilemap> TileLayers { get; } = Layers;
 
     /// <summary>
+    /// Gets or Sets the scale factor to draw each tile at.
+    /// </summary>
+    public Vector2 Scale {
+        get 
+        {
+            return TileLayers[0].Scale;
+        }
+        set
+        {
+            foreach (Tilemap layer in TileLayers)
+            {
+                layer.Scale = value;
+            }   
+        }
+    }
+
+    /// <summary>
     /// Draws all of the Tilemaps in the level to the screen.
     /// </summary>
     /// <param name="spriteBatch">The sprite batch used to draw this tilemap.</param>
@@ -60,16 +77,16 @@ public class LevelScreen(List<Tilemap> Layers)
 
             foreach (LevelScreenData.Layer layer in levelData.layers)
             {
-                Point position = new(layer.x, layer.y);
-                Point dimensions = new Point(layer.rows, layer.columns) * layer.gridSize;
+                Point position = new(layer.spritesheet.x, layer.spritesheet.y);
+                Point dimensions = new(layer.spritesheet.width, layer.spritesheet.height);
 
                 TextureRegion textureRegion = new(texture, position, dimensions);
-                Tileset tileset = new(textureRegion, layer.gridSize, layer.gridSize);
-                Tilemap tilemap = new(tileset, layer.columns, layer.rows, layer.type);
+                Tileset tileset = new(textureRegion, layer.tilemap.gridSize, layer.tilemap.gridSize);
+                Tilemap tilemap = new(tileset, layer.tilemap.columns, layer.tilemap.rows, layer.type);
 
                 for (int i = 0; i < tilemap.Count; i++)
                 {
-                    tilemap.SetTile(i, layer.grid[i]);
+                    tilemap.SetTile(i, layer.tilemap.grid[i]);
                 }
 
                 level.Add(tilemap);
@@ -82,17 +99,28 @@ public class LevelScreen(List<Tilemap> Layers)
 
 internal class LevelScreenData
 {
-    public string spritesheetPath;
-    public Layer[] layers;
+    public required string spritesheetPath { get; init; }
+    public required Layer[] layers { get; init; }
 
     public class Layer
     {
-        public LayerType type;
-        public int x;
-        public int y;
-        public int gridSize;
-        public int rows;
-        public int columns;
-        public List<int> grid;
+        public required LayerType type { get; init; }
+        public required Spritesheet spritesheet { get; init; }
+        public required Tilemap tilemap { get; init; }
+    }
+
+    public struct Spritesheet
+    {
+        public required int x { get; init; }
+        public required int y { get; init; }
+        public required int width { get; init; }
+        public required int height { get; init; }
+    }
+    public struct Tilemap
+    {
+        public required int gridSize { get; init; }
+        public required int rows { get; init; }
+        public required int columns { get; init; }
+        public required List<int> grid { get; init; }
     }
 }
