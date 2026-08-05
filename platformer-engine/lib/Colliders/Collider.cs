@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using Microsoft.Xna.Framework;
-using lib.Colliders.Entities;
 
 namespace lib.Colliders;
 
@@ -18,7 +17,7 @@ public enum Alignment
     BottomRight
 }
 
-public abstract class Collider(Vector2 position)
+public class Collider(Vector2 position)
 {
     /// <summary>
     /// Defines a rectangular region from which collisions are calculated with.

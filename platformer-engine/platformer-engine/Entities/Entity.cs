@@ -1,9 +1,10 @@
 using Microsoft.Xna.Framework;
 using lib.Graphics.Sprites;
-using lib.Scenes;
+using lib.Colliders;
+using platformer_engine;
 
-namespace lib.Colliders.Entities;
-public abstract class Entity(Scene scene, Vector2 position) : Collider(position), ICollidable
+namespace Entities;
+public abstract class Entity(LevelScene scene, Vector2 position) : Collider(position), ICollidable
 {
     /// <summary>
     /// The velocity of the <see cref="Entity"/>.
@@ -15,7 +16,7 @@ public abstract class Entity(Scene scene, Vector2 position) : Collider(position)
     /// </summary>
     protected TextureManager Texture;
 
-    protected Scene Scene { get; } = scene;
+    protected LevelScene Scene { get; } = scene;
 
     public void LoadContent(Sprite texture)
     {

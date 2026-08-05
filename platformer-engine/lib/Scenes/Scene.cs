@@ -22,11 +22,6 @@ public abstract class Scene : IDisposable
     public bool IsDisposed { get; private set; }
 
     /// <summary>
-    /// Stores a list of collidable objects within the current scene.
-    /// </summary>
-    public List<ICollidable> LevelObjects { get; private set; }
-
-    /// <summary>
     /// Creates a new scene instance.
     /// </summary>
     public Scene()
@@ -52,7 +47,6 @@ public abstract class Scene : IDisposable
     /// </remarks>
     public virtual void Initialize()
     {
-        LevelObjects = [];
         LoadContent();
     }
 

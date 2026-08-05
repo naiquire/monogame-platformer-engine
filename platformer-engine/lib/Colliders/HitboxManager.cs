@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 
-namespace lib.Colliders.Entities;
+namespace lib.Colliders;
 public struct HitboxManager(int width, int height, Alignment alignment)
 {
     /// <summary>

@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace lib.Graphics.Tilemaps;
-public class LevelScreen(List<Tilemap> Layers)
+public class LevelTilemap(List<Tilemap> Layers)
 {
     /// <summary>
     /// Stores a list of the Tilemaps in the level.
@@ -63,7 +63,7 @@ public class LevelScreen(List<Tilemap> Layers)
     /// <param name="content">The content manager used to load the texture for the tileset.</param>
     /// <param name="filename">The path to the json file, relative to the content root directory.</param>
     /// <returns></returns>
-    public static LevelScreen FromFile(ContentManager content, string filename)
+    public static LevelTilemap FromFile(ContentManager content, string filename)
     {
         string filePath = Path.Combine(content.RootDirectory, filename);
         List<Tilemap> level = [];
@@ -93,7 +93,7 @@ public class LevelScreen(List<Tilemap> Layers)
             }
         }
 
-        return new LevelScreen(level);
+        return new LevelTilemap(level);
     }
 }
 

@@ -1,8 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using lib.Graphics.Sprites;
 
-namespace lib.Colliders.Entities;
+namespace lib.Graphics.Sprites;
 public struct TextureManager(Sprite texture)
 {
     public readonly Sprite Texture = texture;
