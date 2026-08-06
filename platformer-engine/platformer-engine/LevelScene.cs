@@ -1,12 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using lib;
+using lib.Colliders;
 using lib.Graphics.Tilemaps;
 using lib.Scenes;
 using Entities;
-using lib.Colliders;
-using System.Collections.Generic;
-using Objects;
+using Levels;
 
 namespace platformer_engine;
 
@@ -18,55 +17,26 @@ public class LevelScene : Scene
     /// <summary>
     /// Stores a list of collidable objects within the current scene.
     /// </summary>
-    public List<ICollidable> Objects { get; private set; }
+    public Level Level { get; private set; }
 
-    private LevelTilemap _tilemap;
+    private TilemapLayers _tilemap;
 
     public override void Initialize()
     {
         _player = new(this, new Vector2(200, 200));
         _player.Initialize();
 
-        Objects = [];
         base.Initialize();
     }
 
     public override void LoadContent()
     {
-        _tilemap = LevelTilemap.FromFile(Core.Content, "Levels/0.json");
+        _tilemap = TilemapLayers.FromFile(Core.Content, "Levels/tilemap.json");
         _tilemap.Scale = 2f * Vector2.One;
 
+        Level = Level.FromFile(Core.Content, "Levels/0.json");
+
         HitboxView = new HitboxViewer(Core.GraphicsDevice);
-
-
-
-        LevelObject floor = new(new Vector2(100, 650));
-        floor.GenerateHitbox(1000, 50);
-        Objects.Add(floor);
-
-        LevelObject wall = new(new Vector2(500, 600));
-        wall.GenerateHitbox(100, 50);
-        Objects.Add(wall);
-
-        LevelObject wall2 = new(new Vector2(700, 550));
-        wall2.GenerateHitbox(100, 20);
-        Objects.Add(wall2);
-
-        LevelObject wall3 = new(new Vector2(200, 500));
-        wall3.GenerateHitbox(20, 100);
-        Objects.Add(wall3);
-
-        LevelObject wall4 = new(new Vector2(300, 300));
-        wall4.GenerateHitbox(20, 100);
-        Objects.Add(wall4);
-
-        LevelObject wall5 = new(new Vector2(200, 60));
-        wall5.GenerateHitbox(20, 120);
-        Objects.Add(wall5);
-
-        LevelObject walll2 = new(new Vector2(800, 150));
-        walll2.GenerateHitbox(100, 20);
-        Objects.Add(walll2);
 
         // Create the texture atlas from the XML configuration file.
         // TextureAtlas atlas = TextureAtlas.FromFile(Content, "Images/TextureAtlas.xml");
@@ -98,9 +68,17 @@ public class LevelScene : Scene
         HitboxView.DrawHitbox(Core.SpriteBatch, _player.GetHitbox());
         HitboxView.DrawPoint(Core.SpriteBatch, _player.Position);
 
-        foreach (ICollidable collider in Objects)
+        foreach (ICollidable solid in Level.Solids)
         {
-            HitboxView.DrawHitbox(Core.SpriteBatch, collider.GetHitbox());
+            HitboxView.DrawHitbox(Core.SpriteBatch, solid.GetHitbox());
+        }
+        foreach (ICollidable hazard in Level.Hazards)
+        {
+            HitboxView.DrawHitbox(Core.SpriteBatch, hazard.GetHitbox());
+        }
+        foreach (ICollidable trigger in Level.Triggers)
+        {
+            HitboxView.DrawHitbox(Core.SpriteBatch, trigger.GetHitbox());
         }
 
         // Always end the sprite batch when finished.

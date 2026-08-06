@@ -41,3 +41,6 @@
 #begin Levels/0.json
 /copy:Levels/0.json
 
+#begin Levels/tilemap.json
+/copy:Levels/tilemap.json
+

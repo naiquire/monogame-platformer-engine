@@ -275,7 +275,7 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
     {
         float horizontalDelta = 0;
 
-        foreach (ICollidable collider in Scene.Objects)
+        foreach (ICollidable collider in Scene.Level.Solids)
         {
             Rectangle colliderHitbox = collider.GetHitbox();
             if (SweptAABB(GetPreviousHitbox(), GetHitbox(), colliderHitbox))
@@ -299,7 +299,7 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
     {
         float verticalDelta = 0;
 
-        foreach (ICollidable collider in Scene.Objects)
+        foreach (ICollidable collider in Scene.Level.Solids)
         {
             Rectangle colliderHitbox = collider.GetHitbox();
             if (SweptAABB(GetPreviousHitbox(), GetHitbox(), colliderHitbox))
@@ -325,7 +325,7 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
         Rectangle hitboxForFloorCollision = GetHitbox();
         hitboxForFloorCollision.Offset(0, 1);
         
-        foreach (ICollidable collider in Scene.Objects)
+        foreach (ICollidable collider in Scene.Level.Solids)
         {
             if (hitboxForFloorCollision.Intersects(collider.GetHitbox())) return false;
         }
@@ -340,7 +340,7 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
         Rectangle leftWall = GetHitbox();
         leftWall.Offset(1, 0);
 
-        foreach (ICollidable collider in Scene.Objects)
+        foreach (ICollidable collider in Scene.Level.Solids)
         {
             if (leftWall.Intersects(collider.GetHitbox())) return true;
         }
@@ -355,7 +355,7 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
         Rectangle rightWall = GetHitbox();
         rightWall.Offset(-1, 0);
 
-        foreach (ICollidable collider in Scene.Objects)
+        foreach (ICollidable collider in Scene.Level.Solids)
         {
             if (rightWall.Intersects(collider.GetHitbox())) return true;
         }
@@ -445,7 +445,7 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
         _playerState.CrouchState = CrouchState.None;
         GenerateHitbox((int)_playerSize.X, (int)_playerSize.Y, Hitbox.Alignment);
 
-        foreach (ICollidable collider in Scene.Objects)
+        foreach (ICollidable collider in Scene.Level.Solids)
         {
             if (AABB(GetHitbox(), collider.GetHitbox()))
             {

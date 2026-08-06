@@ -1,0 +1,30 @@
+{
+    "spritesheetPath": "Content/level.png",
+
+    "layers": [
+        {
+            "type": 0,
+
+            "x": 0,
+            "y": 0,
+            "gridSize": "10",
+
+            "rows": 10,
+            "columns": 10,
+
+            "grid": []
+        },
+        {
+            "type": 1,
+
+            "x": 100,
+            "y": 0,
+            "gridSize": 5,
+            
+            "rows": 20,
+            "columns": 20,
+
+            "grid": []
+        }
+    ]
+}

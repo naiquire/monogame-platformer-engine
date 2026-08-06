@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace lib.Graphics.Tilemaps;
-public class LevelTilemap(List<Tilemap> Layers)
+public class TilemapLayers(List<Tilemap> Layers)
 {
     /// <summary>
     /// Stores a list of the Tilemaps in the level.
@@ -63,19 +63,19 @@ public class LevelTilemap(List<Tilemap> Layers)
     /// <param name="content">The content manager used to load the texture for the tileset.</param>
     /// <param name="filename">The path to the json file, relative to the content root directory.</param>
     /// <returns></returns>
-    public static LevelTilemap FromFile(ContentManager content, string filename)
+    public static TilemapLayers FromFile(ContentManager content, string filename)
     {
         string filePath = Path.Combine(content.RootDirectory, filename);
         List<Tilemap> level = [];
 
         using (Stream stream = TitleContainer.OpenStream(filePath))
         {
-            LevelScreenData levelData = JsonSerializer.Deserialize<LevelScreenData>(stream);
+            Level levelData = JsonSerializer.Deserialize<Level>(stream);
             
             string contentPath = levelData.spritesheetPath;
             Texture2D texture = content.Load<Texture2D>(contentPath);
 
-            foreach (LevelScreenData.Layer layer in levelData.layers)
+            foreach (Level.Layer layer in levelData.layers)
             {
                 Point position = new(layer.spritesheet.x, layer.spritesheet.y);
                 Point dimensions = new(layer.spritesheet.width, layer.spritesheet.height);
@@ -93,34 +93,34 @@ public class LevelTilemap(List<Tilemap> Layers)
             }
         }
 
-        return new LevelTilemap(level);
-    }
-}
-
-internal class LevelScreenData
-{
-    public required string spritesheetPath { get; init; }
-    public required Layer[] layers { get; init; }
-
-    public class Layer
-    {
-        public required LayerType type { get; init; }
-        public required Spritesheet spritesheet { get; init; }
-        public required Tilemap tilemap { get; init; }
+        return new TilemapLayers(level);
     }
 
-    public struct Spritesheet
+    private class Level
     {
-        public required int x { get; init; }
-        public required int y { get; init; }
-        public required int width { get; init; }
-        public required int height { get; init; }
-    }
-    public struct Tilemap
-    {
-        public required int gridSize { get; init; }
-        public required int rows { get; init; }
-        public required int columns { get; init; }
-        public required List<int> grid { get; init; }
+        public required string spritesheetPath { get; init; }
+        public required Layer[] layers { get; init; }
+
+        public class Layer
+        {
+            public required LayerType type { get; init; }
+            public required Spritesheet spritesheet { get; init; }
+            public required Tilemap tilemap { get; init; }
+        }
+
+        public struct Spritesheet
+        {
+            public required int x { get; init; }
+            public required int y { get; init; }
+            public required int width { get; init; }
+            public required int height { get; init; }
+        }
+        public struct Tilemap
+        {
+            public required int gridSize { get; init; }
+            public required int rows { get; init; }
+            public required int columns { get; init; }
+            public required List<int> grid { get; init; }
+        }
     }
 }
