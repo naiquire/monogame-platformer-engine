@@ -6,6 +6,7 @@ using lib.Graphics.Tilemaps;
 using lib.Scenes;
 using Entities;
 using Levels;
+using Levels.Objects;
 
 namespace platformer_engine;
 
@@ -68,17 +69,9 @@ public class LevelScene : Scene
         HitboxView.DrawHitbox(Core.SpriteBatch, _player.GetHitbox());
         HitboxView.DrawPoint(Core.SpriteBatch, _player.Position);
 
-        foreach (ICollidable solid in Level.Solids)
+        foreach (Interactable solid in Level.ObjectsinLevel)
         {
             HitboxView.DrawHitbox(Core.SpriteBatch, solid.GetHitbox());
-        }
-        foreach (ICollidable hazard in Level.Hazards)
-        {
-            HitboxView.DrawHitbox(Core.SpriteBatch, hazard.GetHitbox());
-        }
-        foreach (ICollidable trigger in Level.Triggers)
-        {
-            HitboxView.DrawHitbox(Core.SpriteBatch, trigger.GetHitbox());
         }
 
         // Always end the sprite batch when finished.
