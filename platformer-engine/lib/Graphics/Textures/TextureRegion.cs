@@ -108,6 +108,7 @@ public class TextureRegion
     /// <param name="layerDepth">The depth of the layer to use when drawing this texture region on screen.</param>
     public void Draw(SpriteBatch spriteBatch, Vector2 position, Color color, float rotation, Vector2 origin, Vector2 scale, SpriteEffects effects, float layerDepth)
     {
+        position += Core.Camera.GetDrawingOffset();
         spriteBatch.Draw(
             Texture,
             position,

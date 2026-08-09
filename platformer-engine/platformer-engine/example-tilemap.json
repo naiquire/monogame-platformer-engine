@@ -7,7 +7,7 @@
 
             "x": 0,
             "y": 0,
-            "gridSize": "10",
+            "gridSize": 10,
 
             "rows": 10,
             "columns": 10,

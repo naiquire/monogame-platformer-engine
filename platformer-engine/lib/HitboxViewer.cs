@@ -1,5 +1,5 @@
 using System;
-using System.ComponentModel;
+using lib;
 using lib.Structures;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -16,14 +16,16 @@ public class HitboxViewer
 
     public void DrawPoint(SpriteBatch spriteBatch, Vector2 point)
     {
-        spriteBatch.Draw(_pixel, point, Color.Green);
+        point += Core.Camera.GetDrawingOffset();
+        spriteBatch.Draw(_pixel, point, Color.Black);
     }
-    public void DrawHitbox(SpriteBatch spriteBatch, Rectangle rectangle)
+    public void DrawHitbox(SpriteBatch spriteBatch, Rectangle rectangle, Color color)
     {
-        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Top,    rectangle.Width, 1), Color.Red);
-        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Bottom, rectangle.Width, 1), Color.Red);
-        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Top,    1, rectangle.Height), Color.Red);
-        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Right, rectangle.Top,    1, rectangle.Height + 1), Color.Red);
+        rectangle.Offset(Core.Camera.GetDrawingOffset().X, Core.Camera.GetDrawingOffset().Y);
+        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Top,    rectangle.Width, 1), color);
+        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Bottom, rectangle.Width, 1), color);
+        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Top,    1, rectangle.Height), color);
+        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Right, rectangle.Top,    1, rectangle.Height + 1), color);
     }
 
     public void DrawHitbox(SpriteBatch spriteBatch, Circle circle)
@@ -31,10 +33,10 @@ public class HitboxViewer
         const int segments = 64;
         float angleStep = MathF.Tau / segments;
 
-        Point center = circle.Location;
+        Point center = circle.Location + Core.Camera.GetDrawingOffset().ToPoint();
         int radius = circle.Radius;
 
-        Point point = center + new Point(radius, 0);
+        Point point;
 
         for (int i = 1; i <= segments; i++)
         {
@@ -45,7 +47,7 @@ public class HitboxViewer
                 MathF.Sin(angle) * radius
             ).ToPoint();
 
-            spriteBatch.Draw(_pixel, point.ToVector2(), null, Color.Red, 0f, Vector2.Zero, 2f, SpriteEffects.None, 0f);
+            spriteBatch.Draw(_pixel, point.ToVector2(), Color.Red);
         }
     }
 

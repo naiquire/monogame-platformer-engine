@@ -37,7 +37,7 @@ public class Core : Game
     /// <summary>
     /// Gets a Rectangle which represents the bounds of the window.
     /// </summary>
-    public static Rectangle ScreenBounds {get; private set; }
+    public static Rectangle ScreenBounds { get; private set; }
 
     /// <summary>
     /// Gets the sprite batch used for all 2D rendering.
@@ -58,6 +58,11 @@ public class Core : Game
     /// Gets a reference to the audio control system.
     /// </summary>
     public static AudioController Audio { get; private set; }
+
+    /// <summary>
+    /// Gets a reference to the camera management system.
+    /// </summary>
+    public static CameraManager Camera { get; private set; }
 
     /// <summary>
     /// Gets or Sets a value that indicates if the game should exit when the esc key on the keyboard is pressed.
@@ -126,6 +131,9 @@ public class Core : Game
         // Create a new audio controller.
         Audio = new AudioController();
 
+        // Create a new camera manager.
+        Camera = new CameraManager();
+
         base.Initialize();
     }
 
@@ -169,13 +177,10 @@ public class Core : Game
         base.Update(gameTime);
     }
 
-        protected override void Draw(GameTime gameTime)
+    protected override void Draw(GameTime gameTime)
     {
         // If there is an active scene, draw it.
-        if (_activeScene != null)
-        {
-            _activeScene.Draw(gameTime);
-        }
+        _activeScene?.Draw(gameTime);
 
         base.Draw(gameTime);
     }

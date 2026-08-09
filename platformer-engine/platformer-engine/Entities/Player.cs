@@ -3,7 +3,6 @@ using System.ComponentModel;
 using Levels.Objects;
 using lib.Colliders;
 using lib.Input;
-using lib.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using platformer_engine;
@@ -93,7 +92,7 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
             DirectionFacing = Direction.Right
         };
 
-        _playerSize = new(40, 80);
+        _playerSize = new(32, 64);
         InitializeKeybindings();
         GenerateHitbox((int)_playerSize.X, (int)_playerSize.Y, Alignment.Bottom);
     }
@@ -106,7 +105,7 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
         Input.SetBinding(PlayerAction.Left, new ActionBindings([Keys.Left], [], []));
         Input.SetBinding(PlayerAction.Right, new ActionBindings([Keys.Right], [], []));
 
-        Input.SetBinding(PlayerAction.Dash, new ActionBindings([Keys.C], [], []));
+        Input.SetBinding(PlayerAction.Dash, new ActionBindings([Keys.C], [MouseButton.Left], []));
         Input.SetBinding(PlayerAction.Jump, new ActionBindings([Keys.Z], [], []));
     }
 

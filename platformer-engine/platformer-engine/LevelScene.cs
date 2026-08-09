@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using lib;
-using lib.Colliders;
 using lib.Graphics.Tilemaps;
 using lib.Scenes;
 using Entities;
@@ -26,6 +25,8 @@ public class LevelScene : Scene
     {
         _player = new(this, new Vector2(200, 200));
         _player.Initialize();
+
+        Core.Camera.CameraMode = CameraMode.Follow;
 
         base.Initialize();
     }
@@ -53,12 +54,15 @@ public class LevelScene : Scene
     public override void Update(GameTime gameTime)
     {
         _player.Update(gameTime);
+
+        // Update the camera controller.
+        Core.Camera.Update(_player);
     }
 
     public override void Draw(GameTime gameTime)
     {
         // Clear the back buffer.
-        Core.GraphicsDevice.Clear(Color.DarkSlateGray);
+        Core.GraphicsDevice.Clear(Color.Black);
 
         // Begin the sprite batch to prepare for rendering.
         Core.SpriteBatch.Begin(samplerState: SamplerState.PointClamp);
@@ -66,13 +70,22 @@ public class LevelScene : Scene
         // Draw the tilemap.
         _tilemap.Draw(Core.SpriteBatch);
 
-        HitboxView.DrawHitbox(Core.SpriteBatch, _player.GetHitbox());
-        HitboxView.DrawPoint(Core.SpriteBatch, _player.Position);
-
-        foreach (Interactable solid in Level.ObjectsinLevel)
+        // Draw hitboxes
+        foreach (SolidObject solid in Level.Solids)
         {
-            HitboxView.DrawHitbox(Core.SpriteBatch, solid.GetHitbox());
+            HitboxView.DrawHitbox(Core.SpriteBatch, solid.GetHitbox(), Color.Blue);
         }
+        foreach (HazardObject hazard in Level.Hazards)
+        {
+            HitboxView.DrawHitbox(Core.SpriteBatch, hazard.GetHitbox(), Color.Red);
+        }
+        foreach (TriggerObject trigger in Level.Triggers)
+        {
+            HitboxView.DrawHitbox(Core.SpriteBatch, trigger.GetHitbox(), Color.Green);
+        }
+
+        HitboxView.DrawHitbox(Core.SpriteBatch, _player.GetHitbox(), Color.Yellow);
+        HitboxView.DrawPoint(Core.SpriteBatch, _player.Position);
 
         // Always end the sprite batch when finished.
         Core.SpriteBatch.End();

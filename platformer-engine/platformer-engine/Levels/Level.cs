@@ -10,10 +10,10 @@ using Microsoft.Xna.Framework.Content;
 namespace Levels;
 public class Level(List<Interactable> objs)
 {
-    public List<Interactable> ObjectsinLevel { get; } = objs;
-    public List<SolidObject> Solids => [.. ObjectsinLevel.OfType<SolidObject>()];
-    public List<HazardObject> Hazards => [.. ObjectsinLevel.OfType<HazardObject>()];
-    public List<TriggerObject> Triggers => [.. ObjectsinLevel.OfType<TriggerObject>()];
+    public List<Interactable> Objects { get; } = objs;
+    public List<SolidObject> Solids => [.. Objects.OfType<SolidObject>()];
+    public List<HazardObject> Hazards => [.. Objects.OfType<HazardObject>()];
+    public List<TriggerObject> Triggers => [.. Objects.OfType<TriggerObject>()];
 
 
     public static Level FromFile(ContentManager content, string filename)
