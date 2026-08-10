@@ -35,11 +35,6 @@ public class Core : Game
     public static new GraphicsDevice GraphicsDevice { get; private set; }
 
     /// <summary>
-    /// Gets a Rectangle which represents the bounds of the window.
-    /// </summary>
-    public static Rectangle ScreenBounds { get; private set; }
-
-    /// <summary>
     /// Gets the sprite batch used for all 2D rendering.
     /// </summary>
     public static SpriteBatch SpriteBatch { get; private set; }
@@ -137,12 +132,6 @@ public class Core : Game
         base.Initialize();
     }
 
-    protected override void LoadContent()
-    {
-        ScreenBounds = new Rectangle(0, 0, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight);
-        base.LoadContent();
-    }
-
     protected override void UnloadContent()
     {
         // Dispose of the audio controller.
@@ -187,8 +176,7 @@ public class Core : Game
 
     public static void ChangeScene(Scene next)
     {
-        // Only set the next scene value if it is not the same
-        // instance as the currently active scene.
+        // Only set the next scene value if it is not the same instance as the currently active scene.
         if (_activeScene != next)
         {
             _nextScene = next;
@@ -210,8 +198,11 @@ public class Core : Game
         _nextScene = null;
 
         // If the active scene now is not null, initialize it.
-        // Remember, just like with Game, the Initialize call also calls the
-        // Scene.LoadContent
         _activeScene?.Initialize();
+    }
+
+    public static Vector2 GetScreenDimensions()
+    {
+        return new Vector2(GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight);
     }
 }

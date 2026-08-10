@@ -23,10 +23,10 @@ public class LevelScene : Scene
 
     public override void Initialize()
     {
-        _player = new(this, new Vector2(200, 200));
+        _player = new(this, new Vector2(600, 200));
         _player.Initialize();
 
-        Core.Camera.CameraMode = CameraMode.Follow;
+        Core.Camera.CameraMode = CameraMode.Standard;
 
         base.Initialize();
     }

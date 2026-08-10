@@ -109,6 +109,8 @@ public class TextureRegion
     public void Draw(SpriteBatch spriteBatch, Vector2 position, Color color, float rotation, Vector2 origin, Vector2 scale, SpriteEffects effects, float layerDepth)
     {
         position += Core.Camera.GetDrawingOffset();
+        if (!CameraManager.IsVisible(position, SourceRectangle.Size.ToVector2())) return;
+
         spriteBatch.Draw(
             Texture,
             position,

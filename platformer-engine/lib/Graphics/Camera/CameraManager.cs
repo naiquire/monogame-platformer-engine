@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Reflection.Metadata.Ecma335;
 using lib;
 using lib.Colliders;
 using Microsoft.Xna.Framework;
@@ -22,9 +20,14 @@ public enum CameraMode
 public class CameraManager
 {
     /// <summary>
-    /// The position of the camera with respect to the origin of the screen. The position is 
+    /// The position of the camera with respect to the origin of the screen.
     /// </summary>
     public Vector2 Position { get; private set; }
+
+    /// <summary>
+    /// A rectangle which defines the coordinates that are currently within the camera's view.
+    /// </summary>
+    public static Rectangle ScreenBounds { get; private set; }
 
     /// <summary>
     /// The current tracking mode which the camera is in.
@@ -51,11 +54,38 @@ public class CameraManager
             case CameraMode.Static:
                 break;
             case CameraMode.Standard:
+
+                const float cutoffPoint = 0.25f;
+
+                float leftBound = cutoffPoint * Core.GetScreenDimensions().X;
+                float rightBound = (1 - cutoffPoint) * Core.GetScreenDimensions().X;
+                float upperBound = cutoffPoint * Core.GetScreenDimensions().Y;
+                float lowerBound = (1 - cutoffPoint) * Core.GetScreenDimensions().Y;
+
+                if (focusPoint.Position.X < Position.X + leftBound)
+                {
+                    SetPosition(new(focusPoint.Position.X - leftBound, Position.Y));
+                }
+                if (focusPoint.Position.X > Position.X + rightBound)
+                {
+                    SetPosition(new(focusPoint.Position.X - rightBound, Position.Y));
+                }
+                if (focusPoint.Position.Y < Position.Y + upperBound)
+                {
+                    SetPosition(new(Position.X, focusPoint.Position.Y - upperBound));
+                }
+                if (focusPoint.Position.Y > Position.Y + lowerBound)
+                {
+                    SetPosition(new(Position.X, focusPoint.Position.Y - lowerBound));
+                }
+
                 break;
             case CameraMode.Follow:
-                Position = focusPoint.Position - new Vector2(Core.GraphicsDevice.PresentationParameters.BackBufferWidth, Core.GraphicsDevice.PresentationParameters.BackBufferHeight) / 2;
+                Position = focusPoint.Position - Core.GetScreenDimensions() * 0.5f;
                 break;
         }
+
+        ScreenBounds = Core.GraphicsDevice.PresentationParameters.Bounds;
     }
 
     /// <summary>
@@ -64,6 +94,28 @@ public class CameraManager
     /// <returns>A vector which will draw the sprites correctly when added to their position.</returns>
     public Vector2 GetDrawingOffset()
     {
-        return Position * -1;
+        return -Position;
     }
+
+    /// <summary>
+    /// Determines if an object is visible on the screen based on the camera.
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns>A boolean value representing whether the object is visible or not.</returns>
+    public static bool IsVisible(Rectangle obj)
+    {
+        return obj.Intersects(ScreenBounds);
+    }
+
+    /// <summary>
+    /// Determines if an object is visible on the screen based on the camera.
+    /// </summary>
+    /// <param name="position"></param>
+    /// <param name="dimensions"></param>
+    /// <returns>A boolean value representing whether the object is visible or not.</returns>
+    public static bool IsVisible(Vector2 position, Vector2 dimensions)
+    {
+        return IsVisible(new Rectangle(position.ToPoint(), dimensions.ToPoint()));
+    }
+    
 }

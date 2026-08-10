@@ -17,11 +17,15 @@ public class HitboxViewer
     public void DrawPoint(SpriteBatch spriteBatch, Vector2 point)
     {
         point += Core.Camera.GetDrawingOffset();
+        if (!CameraManager.IsVisible(point, new(1, 1))) return;
+
         spriteBatch.Draw(_pixel, point, Color.Black);
     }
     public void DrawHitbox(SpriteBatch spriteBatch, Rectangle rectangle, Color color)
     {
-        rectangle.Offset(Core.Camera.GetDrawingOffset().X, Core.Camera.GetDrawingOffset().Y);
+        rectangle.Offset(Core.Camera.GetDrawingOffset());
+        if (!CameraManager.IsVisible(rectangle)) return;
+
         spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Top,    rectangle.Width, 1), color);
         spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Bottom, rectangle.Width, 1), color);
         spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Top,    1, rectangle.Height), color);
