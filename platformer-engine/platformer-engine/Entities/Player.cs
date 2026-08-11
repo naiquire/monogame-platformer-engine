@@ -105,7 +105,7 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
         Input.SetBinding(PlayerAction.Left, new ActionBindings([Keys.Left], [], []));
         Input.SetBinding(PlayerAction.Right, new ActionBindings([Keys.Right], [], []));
 
-        Input.SetBinding(PlayerAction.Dash, new ActionBindings([Keys.C], [MouseButton.Left], []));
+        Input.SetBinding(PlayerAction.Dash, new ActionBindings([Keys.C], [], []));
         Input.SetBinding(PlayerAction.Jump, new ActionBindings([Keys.Z], [], []));
     }
 

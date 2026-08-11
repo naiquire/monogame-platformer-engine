@@ -125,6 +125,7 @@ public class Tilemap
         for (int i = 0; i < Count; i++)
         {
             int tilesetIndex = _tiles[i];
+            if (tilesetIndex == -1) continue;
             TextureRegion tile = _tileset.GetTile(tilesetIndex);
 
             int x = i % Columns;

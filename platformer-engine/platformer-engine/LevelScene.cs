@@ -34,7 +34,7 @@ public class LevelScene : Scene
     public override void LoadContent()
     {
         _tilemap = TilemapLayers.FromFile(Core.Content, "Levels/tilemap.json");
-        _tilemap.Scale = 2f * Vector2.One;
+        _tilemap.Scale = 8f * Vector2.One;
 
         Level = Level.FromFile(Core.Content, "Levels/0.json");
 
