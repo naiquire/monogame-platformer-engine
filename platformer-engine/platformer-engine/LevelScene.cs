@@ -6,20 +6,34 @@ using lib.Scenes;
 using Entities;
 using Levels;
 using Levels.Objects;
+using System.Collections.Generic;
 
 namespace platformer_engine;
 
+public struct Resources
+{
+    public string LevelData;
+    public string TilemapData;
+}
+
 public class LevelScene : Scene
 {
+    private Resources _resources;
+
     private Player _player;
-    public static HitboxViewer HitboxView;
+    public LevelManager Level { get; private set; }
+    public TilemapManager Tilemap { get; private set; }
+    public static HitboxViewer HitboxView;    
 
-    /// <summary>
-    /// Stores a list of collidable objects within the current scene.
-    /// </summary>
-    public Level Level { get; private set; }
 
-    private TilemapLayers _tilemap;
+    public LevelScene(string LevelFile, string TilemapFile)
+    {
+        _resources = new()
+        {
+            LevelData = LevelFile,
+            TilemapData = TilemapFile
+        };
+    }    
 
     public override void Initialize()
     {
@@ -33,22 +47,12 @@ public class LevelScene : Scene
 
     public override void LoadContent()
     {
-        _tilemap = TilemapLayers.FromFile(Core.Content, "Levels/tilemap.json");
-        _tilemap.Scale = 8f * Vector2.One;
+        Level = LevelManager.FromFile(Core.Content, _resources.LevelData);
 
-        Level = Level.FromFile(Core.Content, "Levels/0.json");
+        Tilemap = TilemapManager.FromFile(Core.Content, _resources.TilemapData);
+        Tilemap.Scale = 8f * Vector2.One;
 
         HitboxView = new HitboxViewer(Core.GraphicsDevice);
-
-        // Create the texture atlas from the XML configuration file.
-        // TextureAtlas atlas = TextureAtlas.FromFile(Content, "Images/TextureAtlas.xml");
-
-        // _player.LoadContent(atlas.CreateAnimatedSprite("bat-animation"));
-        // _player.Texture.Scale = new Vector2(4.0f, 4.0f);
-    
-        // Create the tilemap from the XML configuration file.
-        // _tilemap = Tilemap.FromFile(Content, "Images/TilemapDefinition.xml");
-        // _tilemap.Scale = new Vector2(2.0f, 2.0f);
     }
 
     public override void Update(GameTime gameTime)
@@ -68,7 +72,7 @@ public class LevelScene : Scene
         Core.SpriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
         // Draw the tilemap.
-        _tilemap.Draw(Core.SpriteBatch);
+        Tilemap.Draw(Core.SpriteBatch);
 
         // Draw hitboxes
         foreach (SolidObject solid in Level.Solids)

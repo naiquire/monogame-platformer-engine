@@ -1,30 +1,42 @@
 {
-    "spritesheetPath": "Content/level.png",
+  "spritesheetPath": "Images/level",
 
-    "layers": [
-        {
-            "type": 0,
+  "layers": [
+    {
+      "type": 0,
 
-            "x": 0,
-            "y": 0,
-            "gridSize": 10,
+      "spritesheet": {
+        "x": 0,
+        "y": 0,
+        "width": 32,
+        "height": 32
+      },
 
-            "rows": 10,
-            "columns": 10,
+      "tilemap": {
+        "gridSize": 16,
+        "rows": 10,
+        "columns": 10,
 
-            "grid": []
-        },
-        {
-            "type": 1,
+        "grid": []
+      }
+    },
+    {
+      "type": 1,
 
-            "x": 100,
-            "y": 0,
-            "gridSize": 5,
-            
-            "rows": 20,
-            "columns": 20,
+      "spritesheet": {
+        "x": 64,
+        "y": 0,
+        "width": 32,
+        "height": 32
+      },
 
-            "grid": []
-        }
-    ]
+      "tilemap": {
+        "gridSize": 8,
+        "rows": 20,
+        "columns": 20,
+
+        "grid": []
+      }
+    }
+  ]
 }

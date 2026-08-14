@@ -12,7 +12,7 @@ public class PlatformerEngine : Core
     {
         base.Initialize();
 
-        ChangeScene(new LevelScene());
+        ChangeScene(new LevelScene("Levels/0.json", "Levels/tilemap.json"));
     }
 
     protected override void LoadContent()
