@@ -59,8 +59,8 @@ public class LevelManager(List<Interactable> objs)
             foreach (LevelData.TriggerData trigger in triggers)
             {
                 Vector2 position = new(trigger.x, trigger.y);
-                var collider = new TriggerObject(position, trigger.type);
-                collider.GenerateHitbox(trigger.width, trigger.height);
+                Vector2 dimensions = new(trigger.width, trigger.height);
+                var collider = TriggerObject.Build(position, dimensions, trigger.type);
                 colliders.Add(collider);
             }
 
@@ -68,26 +68,101 @@ public class LevelManager(List<Interactable> objs)
         }
     }
 
-    public static LevelManager FromTilemap(TilemapManager tilemap)
+    /// <summary>
+    /// Constructs a Level with solid objects corresponding to a given tilemap manager.
+    /// </summary>
+    /// <param name="tilemap"></param>
+    /// <returns>The constructed level.</returns>
+    public static LevelManager FromTilemap(TilemapManager tilemapManager)
     {
         List<Interactable> colliders = [];
-        int tileCount = tilemap.TileLayers[0].Count;
-
-        for (int i = 0; i < tilemap.TileLayers[0].Rows; i++)
+        foreach (Tilemap tilemap in tilemapManager.TileLayers)
         {
-            for (int j = 0; j < tilemap.TileLayers[0].Columns; j++)
-            {
-                if (tilemap.TileLayers[0].GetTilesetID(i, j) == -1) continue;
-
-                Vector2 position = new(j * tilemap.TileLayers[0].TileWidth, i * tilemap.TileLayers[0].TileHeight);
-                var collider = new SolidObject(position);
-                collider.GenerateHitbox((int)tilemap.TileLayers[0].TileWidth, (int)tilemap.TileLayers[0].TileHeight);
-                colliders.Add(collider);
-            }
+            if (tilemap.LayerType != LayerType.Base) continue;
+            colliders.AddRange(FromTilemap(tilemap));
         }
 
         return new LevelManager(colliders);
     }
+
+    /// <summary>
+    /// Constructs a list of solid objects corresponding to a given tilemap.
+    /// </summary>
+    /// <param name="tilemap"></param>
+    /// <returns>The constructed level.</returns>
+    public static List<Interactable> FromTilemap(Tilemap tilemap)
+    {
+        List<Interactable> colliders = [];
+
+        int tileCount = tilemap.Count;
+        bool[,] visitedTiles = new bool[tilemap.Rows, tilemap.Columns];
+        bool IsInvalidTilePosition(int X, int Y)
+        {
+            return visitedTiles[X, Y] || tilemap.GetTilesetID(X, Y) == -1;
+        }
+
+        for (int i = 0; i < tilemap.Rows; i++)
+        {
+            for (int j = 0; j < tilemap.Columns; j++)
+            {
+                // pass over visited tiles and air tiles
+                if (IsInvalidTilePosition(i, j)) continue;
+
+                // visit the current tile
+                visitedTiles[i, j] = true;
+                int rectangleWidth = 0;
+                int rectangleHeight = 0;
+
+                // maximise width of rectangle within non-air tiles
+                while (true)
+                {
+                    rectangleWidth++;
+                    int column = j + rectangleWidth;
+
+                    // validation checks
+                    if (column >= tilemap.Columns) break;
+                    if (IsInvalidTilePosition(i, column)) break;
+
+                    visitedTiles[i, column] = true;
+                }
+
+                bool outsideTiles = false;
+                while (!outsideTiles)
+                {
+                    rectangleHeight++;
+                    int row = i + rectangleHeight;
+
+                    // validation checks
+                    if (row >= tilemap.Rows) break;
+                    for (int k = 0; k < rectangleWidth; k++)
+                    {
+                        if (IsInvalidTilePosition(i + rectangleHeight, j + k))
+                        {
+                            outsideTiles = true;
+                            break;
+                        }
+                    }
+
+                    // add current row to rectangle
+                    if (outsideTiles) continue;
+                    for (int k = 0; k < rectangleWidth; k++)
+                    {
+                        visitedTiles[i + rectangleHeight, j + k] = true;
+                    }
+                }
+
+                // generate object and hitbox
+                Vector2 position = new(j * tilemap.TileWidth, i * tilemap.TileHeight);
+                Vector2 dimensions = new((int)tilemap.TileWidth * rectangleWidth, (int)tilemap.TileHeight * rectangleHeight);
+                SolidObject collider = SolidObject.Build(position, dimensions);
+                colliders.Add(collider);
+            }
+        }
+
+        return colliders;
+    }
+
+
 
     private class LevelData
     {

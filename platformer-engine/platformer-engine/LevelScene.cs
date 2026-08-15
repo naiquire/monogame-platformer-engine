@@ -50,8 +50,6 @@ public class LevelScene : Scene
 
     public override void LoadContent()
     {
-        // Level = LevelManager.FromFile(Core.Content, _resources.LevelData);
-
         Tilemap = TilemapManager.FromFile(Core.Content, _resources.TilemapData);
         Tilemap.Scale = 3f * Vector2.One;
 

@@ -13,6 +13,13 @@ public enum TriggerType
 public class TriggerObject(Vector2 position, TriggerType type) : Interactable(position)
 {
     public TriggerType Type = type;
+
+    public static TriggerObject Build(Vector2 position, Vector2 dimensions, TriggerType type, Alignment alignment = Alignment.TopLeft)
+    {
+        var collider = new TriggerObject(position, type);
+        collider.GenerateHitbox((int)dimensions.X, (int)dimensions.Y, alignment);
+        return collider;
+    }
     public override void HandleCollision(Player player)
     {
         switch (Type)

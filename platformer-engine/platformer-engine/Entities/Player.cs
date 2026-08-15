@@ -125,7 +125,7 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
             _playerState.Dash.IsDashAvailable = true;
         }
 
-        Console.WriteLine($"Dash:{_playerState.Dash.DashState},{_playerState.Dash.IsDashAvailable && _playerState.Dash.DashTimeRemaining == -1} Dir:{_playerState.DirectionFacing} Cling:{_playerState.Cling.ClingState} Fly:{_playerState.IsAirborne}");
+        // Console.WriteLine($"Dash:{_playerState.Dash.DashState},{_playerState.Dash.IsDashAvailable && _playerState.Dash.DashTimeRemaining == -1} Dir:{_playerState.DirectionFacing} Cling:{_playerState.Cling.ClingState} Fly:{_playerState.IsAirborne}");
     }
     public override void Update(GameTime gameTime)
     {
