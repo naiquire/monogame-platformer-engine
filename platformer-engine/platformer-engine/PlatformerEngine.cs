@@ -3,7 +3,7 @@ using platformer_engine;
 
 public class PlatformerEngine : Core
 {
-    public PlatformerEngine() : base("PlatformerEngine", 1280, 720, false)
+    public PlatformerEngine() : base("PlatformerEngine", 1920, 1080, false)
     {
 
     }

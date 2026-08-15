@@ -37,8 +37,11 @@ public class TilemapManager(List<Tilemap> Layers)
     /// <param name="spriteBatch">The sprite batch used to draw this tilemap.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
+        DrawLayer(spriteBatch, LayerType.Background);
+        DrawLayer(spriteBatch, LayerType.BackgroundDetail);
         DrawLayer(spriteBatch, LayerType.Base);
         DrawLayer(spriteBatch, LayerType.Detail);
+        DrawLayer(spriteBatch, LayerType.Foreground);
     }
 
     /// <summary>

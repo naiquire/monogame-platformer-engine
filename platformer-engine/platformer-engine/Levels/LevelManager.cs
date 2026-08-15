@@ -4,9 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Levels.Objects;
+using lib.Graphics.Textures;
 using lib.Graphics.Tilemaps;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Levels;
 public class LevelManager(List<Interactable> objs)
@@ -41,7 +43,7 @@ public class LevelManager(List<Interactable> objs)
 
             foreach (LevelData.ObjectData obj in objects)
             {
-                Vector2 position = new (obj.x, obj.y);
+                Vector2 position = new(obj.x, obj.y);
                 var collider = CreateObject(position);
                 collider.GenerateHitbox(obj.width, obj.height);
                 colliders.Add(collider);
@@ -54,16 +56,37 @@ public class LevelManager(List<Interactable> objs)
         {
             List<Interactable> colliders = [];
 
-            foreach (LevelData.TriggerData obj in triggers)
+            foreach (LevelData.TriggerData trigger in triggers)
             {
-                Vector2 position = new (obj.x, obj.y);
-                var collider = new TriggerObject(position, obj.type);
-                collider.GenerateHitbox(obj.width, obj.height);
+                Vector2 position = new(trigger.x, trigger.y);
+                var collider = new TriggerObject(position, trigger.type);
+                collider.GenerateHitbox(trigger.width, trigger.height);
                 colliders.Add(collider);
             }
 
             return colliders;
         }
+    }
+
+    public static LevelManager FromTilemap(TilemapManager tilemap)
+    {
+        List<Interactable> colliders = [];
+        int tileCount = tilemap.TileLayers[0].Count;
+
+        for (int i = 0; i < tilemap.TileLayers[0].Rows; i++)
+        {
+            for (int j = 0; j < tilemap.TileLayers[0].Columns; j++)
+            {
+                if (tilemap.TileLayers[0].GetTilesetID(i, j) == -1) continue;
+
+                Vector2 position = new(j * tilemap.TileLayers[0].TileWidth, i * tilemap.TileLayers[0].TileHeight);
+                var collider = new SolidObject(position);
+                collider.GenerateHitbox((int)tilemap.TileLayers[0].TileWidth, (int)tilemap.TileLayers[0].TileHeight);
+                colliders.Add(collider);
+            }
+        }
+
+        return new LevelManager(colliders);
     }
 
     private class LevelData

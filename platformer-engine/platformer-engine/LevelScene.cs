@@ -23,7 +23,10 @@ public class LevelScene : Scene
     private Player _player;
     public LevelManager Level { get; private set; }
     public TilemapManager Tilemap { get; private set; }
-    public static HitboxViewer HitboxView;    
+    public static HitboxViewer HitboxView;
+
+
+    public static readonly bool ShowHitboxes = true; 
 
 
     public LevelScene(string LevelFile, string TilemapFile)
@@ -40,17 +43,19 @@ public class LevelScene : Scene
         _player = new(this, new Vector2(600, 200));
         _player.Initialize();
 
-        Core.Camera.CameraMode = CameraMode.Standard;
+        Core.Camera.CameraMode = CameraMode.Static;
 
         base.Initialize();
     }
 
     public override void LoadContent()
     {
-        Level = LevelManager.FromFile(Core.Content, _resources.LevelData);
+        // Level = LevelManager.FromFile(Core.Content, _resources.LevelData);
 
         Tilemap = TilemapManager.FromFile(Core.Content, _resources.TilemapData);
-        Tilemap.Scale = 8f * Vector2.One;
+        Tilemap.Scale = 3f * Vector2.One;
+
+        Level = LevelManager.FromTilemap(Tilemap);
 
         HitboxView = new HitboxViewer(Core.GraphicsDevice);
     }
@@ -75,17 +80,20 @@ public class LevelScene : Scene
         Tilemap.Draw(Core.SpriteBatch);
 
         // Draw hitboxes
-        foreach (SolidObject solid in Level.Solids)
+        if (ShowHitboxes)
         {
-            HitboxView.DrawHitbox(Core.SpriteBatch, solid.GetHitbox(), Color.Blue);
-        }
-        foreach (HazardObject hazard in Level.Hazards)
-        {
-            HitboxView.DrawHitbox(Core.SpriteBatch, hazard.GetHitbox(), Color.Red);
-        }
-        foreach (TriggerObject trigger in Level.Triggers)
-        {
-            HitboxView.DrawHitbox(Core.SpriteBatch, trigger.GetHitbox(), Color.Green);
+            foreach (SolidObject solid in Level.Solids)
+            {
+                HitboxView.DrawHitbox(Core.SpriteBatch, solid.GetHitbox(), Color.Blue);
+            }
+            foreach (HazardObject hazard in Level.Hazards)
+            {
+                HitboxView.DrawHitbox(Core.SpriteBatch, hazard.GetHitbox(), Color.Red);
+            }
+            foreach (TriggerObject trigger in Level.Triggers)
+            {
+                HitboxView.DrawHitbox(Core.SpriteBatch, trigger.GetHitbox(), Color.Green);
+            }
         }
 
         HitboxView.DrawHitbox(Core.SpriteBatch, _player.GetHitbox(), Color.Yellow);

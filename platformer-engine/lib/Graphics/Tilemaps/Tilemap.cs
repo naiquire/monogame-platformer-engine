@@ -6,12 +6,13 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using lib.Graphics.Textures;
+using System.Reflection.Metadata.Ecma335;
 
 namespace lib.Graphics.Tilemaps;
 
 public enum LayerType
 {
-    Base, Detail
+    Background, BackgroundDetail, Base, Detail, Foreground
 }
 public class Tilemap
 {
@@ -114,6 +115,27 @@ public class Tilemap
     {
         int index = row * Columns + column;
         return GetTile(index);
+    }
+
+    /// <summary>
+    /// Gets the tileset ID of the tile at the specified index in the tilemap.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns>The tileset ID of the tile.</returns>
+    public int GetTilesetID(int index)
+    {
+        return _tiles[index];   
+    }
+
+    /// <summary>
+    /// Gets the tileset ID of the tile at the specified row and column in the tilemap.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns>The tileset ID of the tile.</returns>
+    public int GetTilesetID(int row, int column)
+    {
+        int index = row * Columns + column;
+        return _tiles[index];   
     }
 
     /// <summary>
