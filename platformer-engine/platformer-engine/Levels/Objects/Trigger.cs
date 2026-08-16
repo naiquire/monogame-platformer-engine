@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Entities;
 using lib;
 using lib.Colliders;
@@ -10,23 +11,33 @@ public enum TriggerType
 {
     Transition
 }
-public class TriggerObject(Vector2 position, TriggerType type) : Interactable(position)
+public class TriggerObject(Vector2 position) : Interactable(position)
 {
-    public TriggerType Type = type;
+    public static TriggerObject CreateTriggerType(Vector2 position, TriggerType type)
+    {
+        return type switch
+        {
+            TriggerType.Transition => new TransitionTrigger(position),
 
+            _ => throw new InvalidEnumArgumentException()
+        };
+    }
     public static TriggerObject Build(Vector2 position, Vector2 dimensions, TriggerType type, Alignment alignment = Alignment.TopLeft)
     {
-        var collider = new TriggerObject(position, type);
+        TriggerObject collider = CreateTriggerType(position, type);
         collider.GenerateHitbox((int)dimensions.X, (int)dimensions.Y, alignment);
         return collider;
     }
+
+    public override void HandleCollision(Player player) {}
+}
+
+public class TransitionTrigger(Vector2 position) : TriggerObject(position)
+{
+    private readonly string _level = "Levels/0.json";
+    private readonly string _tilemap = "Levels/tilemap.json";
     public override void HandleCollision(Player player)
     {
-        switch (Type)
-        {
-            case TriggerType.Transition:
-                Core.ChangeScene(new LevelScene("Levels/0.json", "Levels/tilemap.json"));
-                break;
-        }
+        Core.ChangeScene(new LevelScene(_level, _tilemap));
     }
 }

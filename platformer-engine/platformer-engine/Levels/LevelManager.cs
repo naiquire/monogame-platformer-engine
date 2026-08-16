@@ -4,11 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Levels.Objects;
-using lib.Graphics.Textures;
 using lib.Graphics.Tilemaps;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace Levels;
 public class LevelManager(List<Interactable> objs)

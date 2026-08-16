@@ -6,18 +6,17 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using lib.Graphics.Textures;
-using System.Reflection.Metadata.Ecma335;
 
 namespace lib.Graphics.Tilemaps;
 
 public enum LayerType
 {
-    Background, BackgroundDetail, Base, Detail, Foreground
+    Background = 0, BackgroundDetail = 1, Base = 2, Detail = 3, Foreground = 4
 }
 public class Tilemap
 {
     private readonly Tileset _tileset;
-    private int[] Tiles { get; }
+    private readonly int[] _tiles;
 
     /// <summary>
     /// Gets the total number of rows in this tilemap.
@@ -67,7 +66,8 @@ public class Tilemap
         Columns = columns;
         Count = Columns * Rows;
         Scale = Vector2.One;
-        Tiles = new int[Count];
+        _tiles = new int[Count];
+        LayerType = layerType;
     }
 
     /// <summary>
@@ -78,7 +78,7 @@ public class Tilemap
     /// <param name="tilesetID">The tileset id of the tile from the tileset to use.</param>
     public void SetTile(int index, int tilesetID)
     {
-        Tiles[index] = tilesetID;
+        _tiles[index] = tilesetID;
     }
 
     /// <summary>
@@ -101,7 +101,7 @@ public class Tilemap
     /// <returns>The texture region of the tile from this tilemap at the specified index.</returns>
     public TextureRegion GetTile(int index)
     {
-        return _tileset.GetTile(Tiles[index]);
+        return _tileset.GetTile(_tiles[index]);
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ public class Tilemap
     /// <returns>The tileset ID of the tile.</returns>
     public int GetTilesetID(int index)
     {
-        return Tiles[index];   
+        return _tiles[index];   
     }
 
     /// <summary>
@@ -135,7 +135,7 @@ public class Tilemap
     public int GetTilesetID(int row, int column)
     {
         int index = row * Columns + column;
-        return Tiles[index];   
+        return _tiles[index];   
     }
 
     /// <summary>
@@ -146,7 +146,7 @@ public class Tilemap
     {
         for (int i = 0; i < Count; i++)
         {
-            int tilesetIndex = Tiles[i];
+            int tilesetIndex = _tiles[i];
             if (tilesetIndex == -1) continue;
             TextureRegion tile = _tileset.GetTile(tilesetIndex);
 
