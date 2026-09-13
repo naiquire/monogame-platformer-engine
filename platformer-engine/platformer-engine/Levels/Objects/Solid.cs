@@ -12,7 +12,7 @@ public class SolidObject(Vector2 position) : Interactable(position)
         collider.GenerateHitbox((int)dimensions.X, (int)dimensions.Y, alignment);
         return collider;
     }
-    public override void HandleCollision(Player player)
+    public void HandleCollision(Player player)
     {
         
     }

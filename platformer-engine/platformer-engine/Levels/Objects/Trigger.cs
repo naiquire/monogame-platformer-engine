@@ -11,7 +11,7 @@ public enum TriggerType
 {
     Transition
 }
-public class TriggerObject(Vector2 position) : Interactable(position)
+public abstract class TriggerObject(Vector2 position) : Interactable(position)
 {
     public static TriggerObject CreateTriggerType(Vector2 position, TriggerType type)
     {
@@ -29,7 +29,7 @@ public class TriggerObject(Vector2 position) : Interactable(position)
         return collider;
     }
 
-    public override void HandleCollision(Player player) {}
+    public abstract void HandleCollision(Player player);
 }
 
 public class TransitionTrigger(Vector2 position) : TriggerObject(position)
