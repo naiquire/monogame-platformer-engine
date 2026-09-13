@@ -40,6 +40,8 @@ public class HitboxViewer
         Point center = circle.Location + Core.Camera.GetDrawingOffset().ToPoint();
         int radius = circle.Radius;
 
+        if (!CameraManager.IsVisible((center - new Point(radius, radius)).ToVector2(), new Vector2(radius, radius) * 2)) return;
+
         Point point;
 
         for (int i = 1; i <= segments; i++)
@@ -55,4 +57,13 @@ public class HitboxViewer
         }
     }
 
+    public void DrawHitbox(SpriteBatch spriteBatch, RightTriangle triangle, Color color)
+    {
+        Vector2 rightVertex = triangle.Location.ToVector2();
+        rightVertex += Core.Camera.GetDrawingOffset();
+
+        spriteBatch.Draw(_pixel, new Rectangle(triangle.Left, triangle.Bottom, triangle.Width, 1), color);
+        spriteBatch.Draw(_pixel, new Rectangle(triangle.Right, triangle.Top, 1, triangle.Height), color);
+        spriteBatch.Draw(_pixel, new Rectangle(triangle.Left, triangle.Bottom, (int)triangle.HypotenuseLength, 1), null, color, MathF.Atan2(triangle.Height, triangle.Width), new Vector2(triangle.Left, triangle.Bottom), SpriteEffects.None, 0);
+    }
 }

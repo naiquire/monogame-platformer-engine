@@ -158,13 +158,13 @@ public class Player(LevelScene scene, Vector2 position) : Entity(scene, position
                 break;
         }
 
-        foreach (Interactable obj in Scene.Level.Objects)
-        {
-            if (AABB(GetHitbox(), obj.GetHitbox()))
-            {
-                obj.HandleCollision(this);
-            }
-        }
+        // foreach (Interactable obj in Scene.Level.Objects)
+        // {
+        //     if (AABB(GetHitbox(), obj.GetHitbox()))
+        //     {
+        //         obj.HandleCollision(this);
+        //     }
+        // }
 
         UpdateState();
         base.Update(gameTime);

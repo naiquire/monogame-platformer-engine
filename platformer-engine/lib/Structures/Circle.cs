@@ -61,7 +61,7 @@ public readonly struct Circle : IEquatable<Circle>
     /// Creates a new circle with the specified position and radius.
     /// </summary>
     /// <param name="x">The x-coordinate of the center of the circle.</param>
-    /// <param name="y">The y-coordinate of the center of the circle..</param>
+    /// <param name="y">The y-coordinate of the center of the circle.</param>
     /// <param name="radius">The length from the center of the circle to an edge.</param>
     public Circle(int x, int y, int radius)
     {
