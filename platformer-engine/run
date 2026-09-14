@@ -1,3 +1,0 @@
-#!/bin/bash
-
-dotnet run --project ./platformer-engine/platformer-engine.csproj

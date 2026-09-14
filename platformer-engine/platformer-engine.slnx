@@ -1,4 +1,0 @@
-<Solution>
-  <Project Path="lib/lib.csproj" />
-  <Project Path="platformer-engine/platformer-engine.csproj" />
-</Solution>
