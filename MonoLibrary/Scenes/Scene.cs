@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using MonoLibrary.Colliders;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 

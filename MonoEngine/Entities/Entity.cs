@@ -1,12 +1,16 @@
 using Microsoft.Xna.Framework;
 using MonoLibrary.Graphics.Sprites;
 using MonoLibrary.Colliders;
-using MonoLibrary.Colliders.Rectangles;
 using MonoLibrary.Scenes;
 
 namespace MonoEngine.Entities;
-public abstract class Entity(Scene scene, Vector2 position) : Collider(position), ICollidable
+public abstract class Entity(Scene scene, Vector2 position)
 {
+    /// <summary>
+    /// The collider for the <see cref="Entity"/> 
+    /// </summary>
+    public RectangleCollider Collider { get; } = new(position);
+
     /// <summary>
     /// The velocity of the <see cref="Entity"/>.
     /// </summary>

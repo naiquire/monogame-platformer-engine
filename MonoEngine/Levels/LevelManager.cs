@@ -7,64 +7,65 @@ using MonoEngine.Levels.Objects;
 using MonoLibrary.Graphics.Tilemaps;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
+using MonoLibrary.Colliders;
 
-namespace Levels;
-public class LevelManager(List<Interactable> objs)
+namespace MonoEngine.Levels;
+public class LevelManager(List<LevelObject> objs)
 {
-    public List<Interactable> Objects { get; } = objs;
+    public List<LevelObject> Objects { get; } = objs;
 
-    public List<SolidObject> Solids => [.. Objects.OfType<SolidObject>()];
-    public List<HazardObject> Hazards => [.. Objects.OfType<HazardObject>()];
+    public List<SolidObject<Polygon>> Solids => [.. Objects.OfType<SolidObject<Polygon>>()];
+    public List<HazardObject<Polygon>> Hazards => [.. Objects.OfType<HazardObject<Polygon>>()];
     public List<TriggerObject> Triggers => [.. Objects.OfType<TriggerObject>()];
 
 
-    public static LevelManager FromFile(ContentManager content, string filename)
-    {
-        string filePath = Path.Combine(content.RootDirectory, filename);
+    // public static LevelManager FromFile(ContentManager content, string filename)
+    // {
+    //     string filePath = Path.Combine(content.RootDirectory, filename);
 
-        List<Interactable> objs = [];
+    //     List<LevelObject<Polygon>> objs = [];
 
-        using (Stream stream = TitleContainer.OpenStream(filePath))
-        {
-            LevelData levelData = JsonSerializer.Deserialize<LevelData>(stream);
+    //     using (Stream stream = TitleContainer.OpenStream(filePath))
+    //     {
+    //         LevelData levelData = JsonSerializer.Deserialize<LevelData>(stream);
 
-            objs.AddRange(ParseObjectType(levelData.solids, (position) => new SolidObject(position)));
-            objs.AddRange(ParseObjectType(levelData.hazards, (position) => new HazardObject(position)));
-            objs.AddRange(ParseTriggers(levelData.triggers));
-        }
+    //         objs.AddRange(ParseObjectType(levelData.solids, (position, dimensions) => new BlockSolid(position, dimensions)));
+    //         objs.AddRange(ParseObjectType(levelData.hazards, (position) => new HazardObject(position)));
+    //         objs.AddRange(ParseTriggers(levelData.triggers));
+    //     }
 
-        return new LevelManager(objs);
+    //     return new LevelManager(objs);
 
-        static List<Interactable> ParseObjectType(List<LevelData.ObjectData> objects, Func<Vector2, Interactable> CreateObject)
-        {
-            List<Interactable> colliders = [];
+    //     static List<SolidObject<Quadrilateral>> ParseObjectType(List<LevelData.ObjectData> objects, Func<Vector2, Vector2, SolidObject<Polygon>> CreateObject)
+    //     {
+    //         List<SolidObject<Quadrilateral>> colliders = [];
 
-            foreach (LevelData.ObjectData obj in objects)
-            {
-                Vector2 position = new(obj.x, obj.y);
-                var collider = CreateObject(position);
-                collider.GenerateHitbox(obj.width, obj.height);
-                colliders.Add(collider);
-            }
+    //         foreach (LevelData.ObjectData obj in objects)
+    //         {
+    //             Vector2 position = new(obj.x, obj.y);
+    //             Vector2 dimensions = new(obj.width, obj.height);
+    //             var collider = new BlockSolid(position, dimensions);
+    //             colliders.Add(collider);
+    //         }
 
-            return colliders;
-        }
+    //         return colliders;
+    //     }
 
-        static List<Interactable> ParseTriggers(List<LevelData.TriggerData> triggers)
-        {
-            List<Interactable> colliders = [];
+    //     static List<Interactable> ParseTriggers(List<LevelData.TriggerData> triggers)
+    //     {
+    //         List<Interactable> colliders = [];
 
-            foreach (LevelData.TriggerData trigger in triggers)
-            {
-                Vector2 position = new(trigger.x, trigger.y);
-                Vector2 dimensions = new(trigger.width, trigger.height);
-                var collider = TriggerObject.Build(position, dimensions, trigger.type);
-                colliders.Add(collider);
-            }
+    //         foreach (LevelData.TriggerData trigger in triggers)
+    //         {
+    //             Vector2 position = new(trigger.x, trigger.y);
+    //             Vector2 dimensions = new(trigger.width, trigger.height);
+    //             var collider = TriggerObject.Build(position, dimensions, trigger.type);
+    //             colliders.Add(collider);
+    //         }
 
-            return colliders;
-        }
-    }
+    //         return colliders;
+    //     }
+    // }
 
     /// <summary>
     /// Constructs a Level with solid objects corresponding to a given tilemap manager.
@@ -73,7 +74,7 @@ public class LevelManager(List<Interactable> objs)
     /// <returns>The constructed level.</returns>
     public static LevelManager FromTilemap(TilemapManager tilemapManager)
     {
-        List<Interactable> colliders = [];
+        List<LevelObject> colliders = [];
         foreach (Tilemap tilemap in tilemapManager.TileLayers)
         {
             if (tilemap.LayerType != LayerType.Base) continue;
@@ -88,9 +89,9 @@ public class LevelManager(List<Interactable> objs)
     /// </summary>
     /// <param name="tilemap"></param>
     /// <returns>The constructed level.</returns>
-    public static List<Interactable> FromTilemap(Tilemap tilemap)
+    public static List<LevelObject> FromTilemap(Tilemap tilemap)
     {
-        List<Interactable> colliders = [];
+        List<LevelObject> colliders = [];
 
         bool[,] visitedTiles = new bool[tilemap.Rows, tilemap.Columns];
         bool IsInvalidTilePosition(int X, int Y)
@@ -151,7 +152,7 @@ public class LevelManager(List<Interactable> objs)
                 // generate object and hitbox
                 Vector2 position = new(j * tilemap.TileWidth, i * tilemap.TileHeight);
                 Vector2 dimensions = new((int)tilemap.TileWidth * rectangleWidth, (int)tilemap.TileHeight * rectangleHeight);
-                SolidObject collider = SolidObject.Build(position, dimensions);
+                LevelObject collider = new BlockSolid(position, dimensions);
                 colliders.Add(collider);
             }
         }

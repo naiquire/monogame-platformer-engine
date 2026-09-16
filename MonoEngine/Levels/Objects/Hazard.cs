@@ -1,15 +1,30 @@
-using MonoEngine.Entities;
 using MonoLibrary.Colliders;
-using MonoLibrary.Colliders.Rectangles;
 using Microsoft.Xna.Framework;
+using MonoEngine.Entities;
 
 namespace MonoEngine.Levels.Objects;
-public class HazardObject(Vector2 position) : Interactable(position)
+public abstract class HazardObject<T> : LevelObject<T> where T : Polygon
 {
-    public static HazardObject Build(Vector2 position, Vector2 dimensions, Alignment alignment = Alignment.TopLeft)
+    public override void HandleCollision(Entity entity)
     {
-        var collider = new HazardObject(position);
-        collider.GenerateHitbox((int)dimensions.X, (int)dimensions.Y, alignment);
-        return collider;
+        
+    }
+}
+
+public class SpikeHazard : HazardObject<Quadrilateral>
+{
+    public SpikeHazard(Vector2 position, Vector2 dimensions)
+    {
+        Collider = new RectangleCollider(position);
+        ((RectangleCollider)Collider).GenerateHitbox(dimensions);
+    }
+}
+
+public class SawbladeHazard : HazardObject<Circle>
+{
+    public SawbladeHazard(Vector2 position, float radius)
+    {
+        Collider = new CircleCollider(position);
+        ((CircleCollider)Collider).GenerateHitbox(radius);
     }
 }

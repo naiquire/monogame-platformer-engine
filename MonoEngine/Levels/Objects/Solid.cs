@@ -1,13 +1,30 @@
-using MonoLibrary.Colliders.Rectangles;
+using MonoLibrary.Colliders;
 using Microsoft.Xna.Framework;
+using MonoEngine.Entities;
 
 namespace MonoEngine.Levels.Objects;
-public class SolidObject(Vector2 position) : Interactable(position)
+public abstract class SolidObject<T> : LevelObject<T> where T : Polygon
 {
-    public static SolidObject Build(Vector2 position, Vector2 dimensions, Alignment alignment = Alignment.TopLeft)
+    public override void HandleCollision(Entity entity)
     {
-        var collider = new SolidObject(position);
-        collider.GenerateHitbox((int)dimensions.X, (int)dimensions.Y, alignment);
-        return collider;
+        
+    }
+}
+
+public class BlockSolid : SolidObject<Quadrilateral>
+{
+    public BlockSolid(Vector2 position, Vector2 dimensions)
+    {
+        Collider = new RectangleCollider(position);
+        ((RectangleCollider)Collider).GenerateHitbox(dimensions);
+    }
+}
+
+public class SlopeSolid : SolidObject<RightTriangle>
+{
+    public SlopeSolid(Vector2 position, Vector2 dimensions, RightTriangle.NormalDirection direction)
+    {
+        Collider = new TriangleCollider(position);
+        ((TriangleCollider)Collider).GenerateHitbox(dimensions, direction);
     }
 }

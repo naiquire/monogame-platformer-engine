@@ -1,6 +1,5 @@
 using MonoLibrary;
 using MonoLibrary.Colliders;
-using MonoLibrary.Colliders.Rectangles;
 using Microsoft.Xna.Framework;
 
 namespace MonoLibrary.Graphics.Camera;
@@ -29,7 +28,7 @@ public class CameraManager
     /// <summary>
     /// A rectangle which defines the coordinates that are currently within the camera's view.
     /// </summary>
-    public static Rectangle ScreenBounds { get; private set; }
+    public static Quadrilateral ScreenBounds { get; private set; }
 
     /// <summary>
     /// The current tracking mode which the camera is in.
@@ -49,7 +48,7 @@ public class CameraManager
     /// Updates the position of the camera to follow the given entity.
     /// </summary>
     /// <param name="focusPoint">The entity to position the camera on.</param>
-    public void Update(Collider focusPoint)
+    public void Update(Polygon focusPoint)
     {
         switch (CameraMode)
         {
@@ -87,7 +86,7 @@ public class CameraManager
                 break;
         }
 
-        ScreenBounds = Core.GraphicsDevice.PresentationParameters.Bounds;
+        ScreenBounds = Quadrilateral.FromRectangle(Core.GraphicsDevice.PresentationParameters.Bounds);
     }
 
     /// <summary>
@@ -102,9 +101,17 @@ public class CameraManager
     /// <summary>
     /// Determines if an object is visible on the screen based on the camera.
     /// </summary>
-    /// <param name="obj"></param>
     /// <returns>A boolean value representing whether the object is visible or not.</returns>
-    public static bool IsVisible(Rectangle obj)
+    public static bool IsVisible(Collider<Polygon> obj)
+    {
+        return IsVisible(obj.Hitbox);
+    }
+
+    /// <summary>
+    /// Determines if an object is visible on the screen based on the camera.
+    /// </summary>
+    /// <returns>A boolean value representing whether the object is visible or not.</returns>
+    public static bool IsVisible(Polygon obj)
     {
         return obj.Intersects(ScreenBounds);
     }
@@ -112,12 +119,9 @@ public class CameraManager
     /// <summary>
     /// Determines if an object is visible on the screen based on the camera.
     /// </summary>
-    /// <param name="position"></param>
-    /// <param name="dimensions"></param>
     /// <returns>A boolean value representing whether the object is visible or not.</returns>
-    public static bool IsVisible(Vector2 position, Vector2 dimensions)
+    public static bool IsVisible(Vector2 position, Vector2 boundingSize)
     {
-        return IsVisible(new Rectangle(position.ToPoint(), dimensions.ToPoint()));
+        return IsVisible(new Quadrilateral(position, boundingSize));
     }
-    
 }

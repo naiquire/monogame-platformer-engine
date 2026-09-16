@@ -1,5 +1,5 @@
 using System;
-using MonoLibrary.Structures;
+using MonoLibrary.Colliders;
 using MonoLibrary.Graphics.Camera;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,15 +22,15 @@ public class HitboxViewer
 
         spriteBatch.Draw(_pixel, point, Color.Black);
     }
-    public void DrawHitbox(SpriteBatch spriteBatch, Rectangle rectangle, Color color)
+    public void DrawHitbox(SpriteBatch spriteBatch, Quadrilateral rectangle, Color color)
     {
         rectangle.Offset(Core.Camera.GetDrawingOffset());
         if (!CameraManager.IsVisible(rectangle)) return;
 
-        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Top,    rectangle.Width, 1), color);
-        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Bottom, rectangle.Width, 1), color);
-        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left,  rectangle.Top,    1, rectangle.Height), color);
-        spriteBatch.Draw(_pixel, new Rectangle(rectangle.Right, rectangle.Top,    1, rectangle.Height), color);
+        spriteBatch.Draw(_pixel, new Rectangle((int)rectangle.Left,  (int)rectangle.Top,    (int)rectangle.Width, 1), color);
+        spriteBatch.Draw(_pixel, new Rectangle((int)rectangle.Left,  (int)rectangle.Bottom, (int)rectangle.Width, 1), color);
+        spriteBatch.Draw(_pixel, new Rectangle((int)rectangle.Left,  (int)rectangle.Top,    1, (int)rectangle.Height), color);
+        spriteBatch.Draw(_pixel, new Rectangle((int)rectangle.Right, (int)rectangle.Top,    1, (int)rectangle.Height), color);
     }
 
     public void DrawHitbox(SpriteBatch spriteBatch, Circle circle)
@@ -38,12 +38,12 @@ public class HitboxViewer
         const int segments = 64;
         float angleStep = MathF.Tau / segments;
 
-        Point center = circle.Location + Core.Camera.GetDrawingOffset().ToPoint();
-        int radius = circle.Radius;
+        Vector2 center = circle.Center + Core.Camera.GetDrawingOffset();
+        float radius = circle.Radius;
 
-        if (!CameraManager.IsVisible((center - new Point(radius, radius)).ToVector2(), new Vector2(radius, radius) * 2)) return;
+        if (!CameraManager.IsVisible(circle)) return;
 
-        Point point;
+        Vector2 point;
 
         for (int i = 1; i <= segments; i++)
         {
@@ -52,20 +52,19 @@ public class HitboxViewer
             point = center + new Vector2(
                 MathF.Cos(angle) * radius,
                 MathF.Sin(angle) * radius
-            ).ToPoint();
+            );
 
-            spriteBatch.Draw(_pixel, point.ToVector2(), Color.Red);
+            spriteBatch.Draw(_pixel, point, Color.Red);
         }
     }
 
     public void DrawHitbox(SpriteBatch spriteBatch, RightTriangle triangle, Color color)
     {
-        Vector2 rightVertex = triangle.Location.ToVector2();
-        rightVertex += Core.Camera.GetDrawingOffset();
-        triangle = new(rightVertex.ToPoint(), new(triangle.Width, triangle.Height));
+        triangle = new(triangle.RightAngleVertex + Core.Camera.GetDrawingOffset(), triangle.BoundingSize, triangle.Direction);
+        if (!CameraManager.IsVisible(triangle)) return;
 
-        spriteBatch.Draw(_pixel, new Rectangle(triangle.Left, triangle.Bottom, triangle.Width, 1), color);
-        spriteBatch.Draw(_pixel, new Rectangle(triangle.Right, triangle.Top, 1, triangle.Height), color);
-        spriteBatch.Draw(_pixel, new Rectangle(triangle.Left, triangle.Bottom, (int)triangle.HypotenuseLength, 1), null, color, -MathF.Atan2(triangle.Height, triangle.Width), new Vector2(0, 0.5f), SpriteEffects.None, 0);
+        spriteBatch.Draw(_pixel, new Rectangle((int)triangle.Left, (int)triangle.Bottom, (int)triangle.Width, 1), color);
+        spriteBatch.Draw(_pixel, new Rectangle((int)triangle.Right, (int)triangle.Top, 1, (int)triangle.Height), color);
+        spriteBatch.Draw(_pixel, new Rectangle((int)triangle.Left, (int)triangle.Bottom, (int)triangle.HypotenuseLength, 1), null, color, -MathF.Atan2(triangle.Height, triangle.Width), new Vector2(0, 0.5f), SpriteEffects.None, 0);
     }
 }

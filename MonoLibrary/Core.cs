@@ -7,6 +7,7 @@ using MonoLibrary.Input;
 using MonoLibrary.Audio;
 using MonoLibrary.Scenes;
 using MonoLibrary.Graphics.Camera;
+using MonoLibrary.Colliders;
 
 namespace MonoLibrary;
 
