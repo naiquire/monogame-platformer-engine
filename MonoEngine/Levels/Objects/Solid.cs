@@ -1,6 +1,7 @@
 using MonoLibrary.Colliders;
 using Microsoft.Xna.Framework;
 using MonoEngine.Entities;
+using MonoLibrary.Structures;
 
 namespace MonoEngine.Levels.Objects;
 public abstract class SolidObject<T> : LevelObject<T> where T : Polygon

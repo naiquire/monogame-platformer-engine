@@ -1,13 +1,9 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
 using MonoEngine.Levels.Objects;
 using MonoLibrary.Graphics.Tilemaps;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using MonoLibrary.Colliders;
+using MonoLibrary.Structures;
 
 namespace MonoEngine.Levels;
 public class LevelManager(List<LevelObject> objs)
@@ -164,19 +160,19 @@ public class LevelManager(List<LevelObject> objs)
 
     private class LevelData
     {
-        public required List<ObjectData> solids { get; init; }
-        public required List<ObjectData> hazards { get; init; }
-        public required List<TriggerData> triggers { get; init; }
+        public required List<ObjectData> Solids { get; init; }
+        public required List<ObjectData> Hazards { get; init; }
+        public required List<TriggerData> Triggers { get; init; }
         public class ObjectData
         {
-            public required int x { get; init; }
-            public required int y { get; init; }
-            public required int width  { get; init; }
-            public required int height  { get; init; }
+            public required int X { get; init; }
+            public required int Y { get; init; }
+            public required int Width  { get; init; }
+            public required int Height  { get; init; }
         }
         public class TriggerData : ObjectData
         {
-            public required TriggerType type { get; init; }
+            public required TriggerType Type { get; init; }
         }
     }
 }

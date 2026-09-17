@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Xna.Framework;
 using MonoLibrary.Structures;
 
 namespace MonoLibrary.Colliders;
@@ -6,10 +7,7 @@ public sealed class CircleCollider(Vector2 position) : Collider<Circle>(position
 {
     public void GenerateHitbox(float radius, Alignment alignment = Alignment.TopLeft)
     {
-        if (radius <= 0)
-        {
-            throw new ArgumentOutOfRangeException("The radius of the hitbox must be greater than zero.");
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(radius);
 
         HitboxManager = new HitboxManager<Circle>(alignment);
         Vector2 alignedPosition = GetAlignedPosition(new(2 * radius));

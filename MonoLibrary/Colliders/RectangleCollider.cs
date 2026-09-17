@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Xna.Framework;
 using MonoLibrary.Structures;
 
 namespace MonoLibrary.Colliders;
@@ -7,10 +8,8 @@ public sealed class RectangleCollider(Vector2 position) : Collider<Quadrilateral
     public void GenerateHitbox(Vector2 dimensions, Alignment alignment = Alignment.TopLeft) => GenerateHitbox(dimensions.X, dimensions.Y, alignment);
     public void GenerateHitbox(float width, float height, Alignment alignment = Alignment.TopLeft)
     {
-        if (width <= 0 || height <= 0)
-        {
-            throw new ArgumentOutOfRangeException("The width and height of the hitbox must be greater than zero.");
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
 
         HitboxManager = new HitboxManager<Quadrilateral>(alignment);
         Vector2 alignedPosition = GetAlignedPosition(width, height);

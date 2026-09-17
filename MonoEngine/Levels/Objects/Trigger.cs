@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Microsoft.Xna.Framework;
 using MonoEngine.Entities;
 using MonoLibrary.Colliders;
+using MonoLibrary.Structures;
 
 namespace MonoEngine.Levels.Objects;
 

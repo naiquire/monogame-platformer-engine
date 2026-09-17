@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel;
 using Microsoft.Xna.Framework;
 using MonoLibrary.Structures;
@@ -67,17 +66,3 @@ public abstract class Collider<T>(Vector2 position) where T : Polygon
     public abstract void UpdateHitbox(Vector2 position);
     public abstract void UpdateHitbox(float X, float Y);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

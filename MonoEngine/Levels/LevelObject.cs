@@ -1,5 +1,6 @@
 using MonoEngine.Entities;
 using MonoLibrary.Colliders;
+using MonoLibrary.Structures;
 
 namespace MonoEngine.Levels;
 public abstract class LevelObject

@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Xna.Framework;
 
 namespace MonoLibrary.Structures;
 public abstract class Polygon : IEquatable<Polygon>
@@ -31,6 +32,9 @@ public abstract class Polygon : IEquatable<Polygon>
         X = position.X;
         Y = position.Y;
     }
+
+    public abstract override bool Equals(object obj);
+    public abstract override int GetHashCode();
 
     public void Offset(float x, float y)
     {
