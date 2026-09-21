@@ -2,11 +2,15 @@ using Microsoft.Xna.Framework;
 using MonoLibrary.Graphics.Sprites;
 using MonoLibrary.Colliders;
 using MonoLibrary.Scenes;
-using MonoLibrary.Structures;
 
 namespace MonoEngine.Entities;
-public abstract class Entity(Scene scene, Vector2 position) : Collider<Quadrilateral>(position)
+public abstract class Entity(Scene scene, Vector2 position)
 {
+    /// <summary>
+    /// The collider for collision calculations.
+    /// </summary>
+    public RectangleCollider Collider = new(position);
+
     /// <summary>
     /// The velocity of the <see cref="Entity"/>.
     /// </summary>

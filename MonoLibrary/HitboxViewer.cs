@@ -1,8 +1,8 @@
 using System;
-using MonoLibrary.Colliders;
 using MonoLibrary.Graphics.Camera;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoLibrary.Structures;
 
 namespace MonoLibrary;
 public class HitboxViewer
@@ -25,7 +25,7 @@ public class HitboxViewer
     public void DrawHitbox(SpriteBatch spriteBatch, Quadrilateral rectangle, Color color)
     {
         rectangle.Offset(Core.Camera.GetDrawingOffset());
-        if (!CameraManager.IsVisible(rectangle)) return;
+        //if (!CameraManager.IsVisible(rectangle)) return;
 
         spriteBatch.Draw(_pixel, new Rectangle((int)rectangle.Left,  (int)rectangle.Top,    (int)rectangle.Width, 1), color);
         spriteBatch.Draw(_pixel, new Rectangle((int)rectangle.Left,  (int)rectangle.Bottom, (int)rectangle.Width, 1), color);

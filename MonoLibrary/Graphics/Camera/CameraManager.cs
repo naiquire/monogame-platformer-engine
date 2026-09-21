@@ -1,6 +1,7 @@
 using MonoLibrary;
 using MonoLibrary.Colliders;
 using Microsoft.Xna.Framework;
+using MonoLibrary.Structures;
 
 namespace MonoLibrary.Graphics.Camera;
 public enum CameraMode
