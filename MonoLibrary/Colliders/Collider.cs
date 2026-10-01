@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using Microsoft.Xna.Framework;
 using MonoLibrary.Structures;
@@ -26,26 +27,27 @@ public struct HitboxManager<T>(Alignment alignment) where T : Polygon
         PreviousHitbox = Hitbox;
         Hitbox = hitbox;
     }
-}    
+}
 
-public abstract class Collider<T>(Vector2 position) where T : Polygon
+
+
+public abstract class Collider(Vector2 position)
 {
     public Vector2 Position = position;
-    protected HitboxManager<T> HitboxManager;
+    public abstract Polygon GenericHitbox { get; }
 
-    public T Hitbox => HitboxManager.Hitbox;
-    public T PreviousHitbox => HitboxManager.PreviousHitbox;
-    public Alignment HitboxAlignment => HitboxManager.Alignment;
+    public abstract void UpdateHitbox(Vector2 position);
+    public abstract void UpdateHitbox(float X, float Y);
 
-    protected Vector2 GetAlignedPosition(float width, float height) => GetAlignedPosition(new(width, height));
-    protected Vector2 GetAlignedPosition(Vector2 boundingSize)
+    protected Vector2 GetAlignedPosition(float width, float height, Alignment alignment) => GetAlignedPosition(new(width, height), alignment);
+    protected Vector2 GetAlignedPosition(Vector2 boundingSize, Alignment alignment)
     {
         float x = Position.X;
         float y = Position.Y;
         float width = boundingSize.X;
         float height = boundingSize.Y;
 
-        return HitboxManager.Alignment switch
+        return alignment switch
         {
             Alignment.TopLeft => new(x, y),
             Alignment.Top => new(x, y),
@@ -60,9 +62,4 @@ public abstract class Collider<T>(Vector2 position) where T : Polygon
             _ => throw new InvalidEnumArgumentException()
         };
     }
-
-    public abstract bool SweptAABB(T currentHitbox, T newHitbox, Polygon obj);
-
-    public abstract void UpdateHitbox(Vector2 position);
-    public abstract void UpdateHitbox(float X, float Y);
 }

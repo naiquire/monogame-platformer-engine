@@ -103,9 +103,9 @@ public class CameraManager
     /// Determines if an object is visible on the screen based on the camera.
     /// </summary>
     /// <returns>A boolean value representing whether the object is visible or not.</returns>
-    public static bool IsVisible(Collider<Polygon> obj)
+    public static bool IsVisible(Collider obj)
     {
-        return IsVisible(obj.Hitbox);
+        return IsVisible(obj.GenericHitbox);
     }
 
     /// <summary>

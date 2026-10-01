@@ -4,15 +4,18 @@ using MonoEngine.Levels.Objects;
 using MonoLibrary.Graphics.Tilemaps;
 using Microsoft.Xna.Framework;
 using MonoLibrary.Structures;
+using MonoLibrary.Colliders;
 
 namespace MonoEngine.Levels;
-public class LevelManager(List<LevelObject> objs)
+public class LevelManager(List<Collider> objs)
 {
-    public List<LevelObject> Objects { get; } = objs;
+    public List<Collider> Objects = objs;
 
-    public List<SolidObject<Polygon>> Solids => [.. Objects.OfType<SolidObject<Polygon>>()];
-    public List<HazardObject<Polygon>> Hazards => [.. Objects.OfType<HazardObject<Polygon>>()];
-    public List<TriggerObject> Triggers => [.. Objects.OfType<TriggerObject>()];
+    // public List<LevelObject<Polygon>> Objects { get; } = objs;
+
+    // public List<SolidObject<Polygon>> Solids => [.. Objects.OfType<SolidObject<Polygon>>()];
+    // public List<HazardObject<Polygon>> Hazards => [.. Objects.OfType<HazardObject<Polygon>>()];
+    // public List<TriggerObject> Triggers => [.. Objects.OfType<TriggerObject>()];
 
 
     // public static LevelManager FromFile(ContentManager content, string filename)
@@ -70,7 +73,7 @@ public class LevelManager(List<LevelObject> objs)
     /// <returns>The constructed level.</returns>
     public static LevelManager FromTilemap(TilemapManager tilemapManager)
     {
-        List<LevelObject> colliders = [];
+        List<Collider> colliders = [];
         foreach (Tilemap tilemap in tilemapManager.TileLayers)
         {
             if (tilemap.LayerType != LayerType.Base) continue;
@@ -86,9 +89,9 @@ public class LevelManager(List<LevelObject> objs)
     /// </summary>
     /// <param name="tilemap"></param>
     /// <returns>The constructed level.</returns>
-    public static List<LevelObject> FromTilemap(Tilemap tilemap)
+    public static List<Collider> FromTilemap(Tilemap tilemap)
     {
-        List<LevelObject> colliders = [];
+        List<Collider> colliders = [];
 
         bool[,] visitedTiles = new bool[tilemap.Rows, tilemap.Columns];
         bool IsInvalidTilePosition(int X, int Y)
@@ -149,7 +152,8 @@ public class LevelManager(List<LevelObject> objs)
                 // generate object and hitbox
                 Vector2 position = new(j * tilemap.TileWidth, i * tilemap.TileHeight);
                 Vector2 dimensions = new((int)tilemap.TileWidth * rectangleWidth, (int)tilemap.TileHeight * rectangleHeight);
-                LevelObject collider = new BlockSolid(position, dimensions);
+                RectangleCollider collider = new RectangleCollider(position);
+                collider.GenerateHitbox(dimensions);
                 colliders.Add(collider);
             }
         }

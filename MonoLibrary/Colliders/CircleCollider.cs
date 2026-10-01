@@ -3,14 +3,21 @@ using Microsoft.Xna.Framework;
 using MonoLibrary.Structures;
 
 namespace MonoLibrary.Colliders;
-public sealed class CircleCollider(Vector2 position) : Collider<Circle>(position)
+public sealed class CircleCollider(Vector2 position) : Collider(position)
 {
+    private HitboxManager<Circle> HitboxManager;
+
+    public Circle Hitbox => HitboxManager.Hitbox;
+    public Circle PreviousHitbox => HitboxManager.PreviousHitbox;
+    public Alignment HitboxAlignment => HitboxManager.Alignment;
+    public override Polygon GenericHitbox => Hitbox;
+
     public void GenerateHitbox(float radius, Alignment alignment = Alignment.TopLeft)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(radius);
 
         HitboxManager = new HitboxManager<Circle>(alignment);
-        Vector2 alignedPosition = GetAlignedPosition(new(2 * radius));
+        Vector2 alignedPosition = GetAlignedPosition(new(2 * radius), alignment);
 
         Circle hitbox = new(alignedPosition, radius);
         HitboxManager.LoadHitbox(hitbox);
@@ -19,14 +26,14 @@ public sealed class CircleCollider(Vector2 position) : Collider<Circle>(position
     public override void UpdateHitbox(Vector2 position)
     {
         Position = position;
-        Vector2 alignedPosition = GetAlignedPosition(Hitbox.Diameter, Hitbox.Diameter);
+        Vector2 alignedPosition = GetAlignedPosition(Hitbox.Diameter, Hitbox.Diameter, HitboxAlignment);
         
         Circle hitbox = new(alignedPosition, Hitbox.Radius);
         HitboxManager.LoadHitbox(hitbox);
     }
     public override void UpdateHitbox(float X, float Y) => UpdateHitbox(new(X, Y));
 
-    public override bool SweptAABB(Circle currentHitbox, Circle newHitbox, Polygon obj)
+    public bool SweptAABB(Circle currentHitbox, Circle newHitbox, Polygon obj)
     {
         if (obj.Intersects(currentHitbox) || obj.Intersects(newHitbox)) return true;
 

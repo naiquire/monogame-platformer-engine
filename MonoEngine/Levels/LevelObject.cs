@@ -9,5 +9,5 @@ public abstract class LevelObject
 }
 public abstract class LevelObject<T> : LevelObject where T : Polygon
 {
-    public Collider<T> Collider;
+    public Collider Collider;
 }
