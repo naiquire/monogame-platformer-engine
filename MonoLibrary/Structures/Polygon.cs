@@ -6,8 +6,8 @@ public abstract class Polygon : IEquatable<Polygon>
 {
     public float X { get; protected set; }
     public float Y { get; protected set; }
-    public float Width => Right - Left;
-    public float Height => Bottom - Top;
+    public float Width => Right - Left + 1;
+    public float Height => Bottom - Top + 1;
 
     public Vector2 Position => new(X, Y);
     public abstract Vector2 Center { get; }
@@ -35,13 +35,6 @@ public abstract class Polygon : IEquatable<Polygon>
 
     public abstract override bool Equals(object obj);
     public abstract override int GetHashCode();
-
-    public void Offset(float x, float y)
-    {
-        X += x;
-        Y += y;
-    }
-    public void Offset(Vector2 position) => Offset(position.X, position.Y);
 
     public abstract bool Contains(float x, float y);
     public bool Contains(Vector2 position) => Contains(position.X, position.Y);

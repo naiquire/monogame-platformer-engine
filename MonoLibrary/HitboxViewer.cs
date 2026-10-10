@@ -20,7 +20,7 @@ public class HitboxViewer
         point += Core.Camera.GetDrawingOffset();
         if (!CameraManager.IsVisible(point, new(1, 1))) return;
 
-        spriteBatch.Draw(_pixel, point, Color.Black);
+        spriteBatch.Draw(_pixel, point, Color.White);
     }
     public void DrawHitbox(SpriteBatch spriteBatch, Quadrilateral rectangle, Color color)
     {

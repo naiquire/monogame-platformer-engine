@@ -79,7 +79,6 @@ public class LevelManager(List<Collider> objs)
             if (tilemap.LayerType != LayerType.Base) continue;
             colliders.AddRange(FromTilemap(tilemap));
         }
-        System.Console.WriteLine(colliders.Count);
 
         return new LevelManager(colliders);
     }

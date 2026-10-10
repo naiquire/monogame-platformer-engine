@@ -50,7 +50,7 @@ public abstract class Collider(Vector2 position)
         return alignment switch
         {
             Alignment.TopLeft => new(x, y),
-            Alignment.Top => new(x, y),
+            Alignment.Top => new(x - width / 2, y),
             Alignment.TopRight => new(x - width, y),
             Alignment.Left => new(x, y - height / 2),
             Alignment.Center => new(x - width / 2, y - height / 2),

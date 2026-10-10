@@ -12,9 +12,9 @@ public class Quadrilateral : Polygon
     public override bool IsEmpty => X == 0 && Y == 0 && Width == 0 && Height == 0;
 
     public override float Left => X;
-    public override float Right => X + Width;
+    public override float Right => X + Width - 1;
     public override float Top => Y;
-    public override float Bottom => Y + Height;
+    public override float Bottom => Y + Height - 1;
 
     public Quadrilateral(float x, float y, float width, float height) : base(x, y)
     {
@@ -46,6 +46,12 @@ public class Quadrilateral : Polygon
     {
         return Left <= x && x <= Right && Top <= y && y <= Bottom;
     }
+
+    public Quadrilateral Offset(float x, float y)
+    {
+        return new Quadrilateral(X + x, Y + y, Width, Height);
+    }
+    public Quadrilateral Offset(Vector2 offset) => Offset(offset.X, offset.Y);
 
     public override void Inflate(float x, float y)
     {

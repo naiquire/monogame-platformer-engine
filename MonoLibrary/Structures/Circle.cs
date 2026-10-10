@@ -12,9 +12,9 @@ public class Circle : Polygon
     public override bool IsEmpty => X == 0 && Y == 0 & Radius == 0;
 
     public override float Left => X;
-    public override float Right => X + Diameter;
+    public override float Right => X + Diameter - 1;
     public override float Top => Y;
-    public override float Bottom => Y + Diameter;
+    public override float Bottom => Y + Diameter - 1;
 
     public Circle(float x, float y, float radius) : base(x, y)
     {
