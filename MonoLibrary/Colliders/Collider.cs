@@ -56,7 +56,7 @@ public abstract class Collider(Vector2 position)
             Alignment.Center => new(x - width / 2, y - height / 2),
             Alignment.Right => new(x - width, y - height / 2),
             Alignment.BottomLeft => new(x, y - height),
-            Alignment.Bottom => new(x - width / 2, y - height),
+            Alignment.Bottom => new(x - width / 2, y - height + 1),
             Alignment.BottomRight => new(x - width, y - height),
 
             _ => throw new InvalidEnumArgumentException()

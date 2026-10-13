@@ -100,8 +100,8 @@ public class CameraManager
                 Position = focusPoint.Position - Core.GetScreenDimensions() * 0.5f / Zoom;
                 break;
         }
-
-        ScreenBounds = new Quadrilateral(Position, Core.GetScreenDimensions());
+        
+        ScreenBounds = new Quadrilateral(Position + Vector2.One * 10, Core.GetScreenDimensions() / Zoom - Vector2.One * 20);
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public class CameraManager
     /// <returns>A vector which will draw the sprites correctly.</returns>
     public Vector2 ApplyDrawingOffset(Vector2 spritePosition)
     {
-        return (-Position + spritePosition) * Zoom;
+        return (spritePosition - Position) * Zoom;
     }
 
     /// <summary>
