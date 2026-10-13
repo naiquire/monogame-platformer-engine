@@ -27,6 +27,11 @@ public class CameraManager
     public Vector2 Position { get; private set; }
 
     /// <summary>
+    /// The zoom of the camera with its <see cref="Position"/> as the centre.
+    /// </summary>
+    public float Zoom { get; private set; }
+
+    /// <summary>
     /// A rectangle which defines the coordinates that are currently within the camera's view.
     /// </summary>
     public static Quadrilateral ScreenBounds { get; private set; }
@@ -46,6 +51,15 @@ public class CameraManager
     }
 
     /// <summary>
+    /// Immediately applies a zoom to the camera.
+    /// </summary>
+    /// <param name="zoom"></param>
+    public void SetZoom(float zoom)
+    {
+        Zoom = zoom;
+    }
+
+    /// <summary>
     /// Updates the position of the camera to follow the given entity.
     /// </summary>
     /// <param name="focusPoint">The entity to position the camera on.</param>
@@ -59,16 +73,16 @@ public class CameraManager
 
                 const float cutoffPoint = 0.25f;
 
-                float leftBound = cutoffPoint * Core.GetScreenDimensions().X;
-                float rightBound = (1 - cutoffPoint) * Core.GetScreenDimensions().X;
-                float upperBound = cutoffPoint * Core.GetScreenDimensions().Y;
-                float lowerBound = (1 - cutoffPoint) * Core.GetScreenDimensions().Y;
+                float leftBound = cutoffPoint * (Core.GetScreenDimensions().X / Zoom);
+                float rightBound = (1 - cutoffPoint) * (Core.GetScreenDimensions().X / Zoom);
+                float upperBound = cutoffPoint * (Core.GetScreenDimensions().Y / Zoom);
+                float lowerBound = (1 - cutoffPoint) * (Core.GetScreenDimensions().Y / Zoom);
 
                 if (focusPoint.Position.X < Position.X + leftBound)
                 {
                     SetPosition(new(focusPoint.Position.X - leftBound, Position.Y));
                 }
-                if (focusPoint.Position.X > Position.X + rightBound)
+                else if (focusPoint.Position.X > Position.X + rightBound)
                 {
                     SetPosition(new(focusPoint.Position.X - rightBound, Position.Y));
                 }
@@ -76,27 +90,27 @@ public class CameraManager
                 {
                     SetPosition(new(Position.X, focusPoint.Position.Y - upperBound));
                 }
-                if (focusPoint.Position.Y > Position.Y + lowerBound)
+                else if (focusPoint.Position.Y > Position.Y + lowerBound)
                 {
                     SetPosition(new(Position.X, focusPoint.Position.Y - lowerBound));
                 }
 
                 break;
             case CameraMode.Follow:
-                Position = focusPoint.Position - Core.GetScreenDimensions() * 0.5f;
+                Position = focusPoint.Position - Core.GetScreenDimensions() * 0.5f / Zoom;
                 break;
         }
 
-        ScreenBounds = Quadrilateral.FromRectangle(Core.GraphicsDevice.PresentationParameters.Bounds);
+        ScreenBounds = new Quadrilateral(Position, Core.GetScreenDimensions());
     }
 
     /// <summary>
     /// Calculates a vector to render sprites at the correct location.
     /// </summary>
-    /// <returns>A vector which will draw the sprites correctly when added to their position.</returns>
-    public Vector2 GetDrawingOffset()
+    /// <returns>A vector which will draw the sprites correctly.</returns>
+    public Vector2 ApplyDrawingOffset(Vector2 spritePosition)
     {
-        return -Position;
+        return (-Position + spritePosition) * Zoom;
     }
 
     /// <summary>

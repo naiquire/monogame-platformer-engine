@@ -17,20 +17,20 @@ public class HitboxViewer
 
     public void DrawPoint(SpriteBatch spriteBatch, Vector2 point)
     {
-        point += Core.Camera.GetDrawingOffset();
-        if (!CameraManager.IsVisible(point, new(1, 1))) return;
+        point = Core.Camera.ApplyDrawingOffset(point);
+        if (!CameraManager.IsVisible(point, new Vector2(1, 1) * Core.Camera.Zoom)) return;
 
         spriteBatch.Draw(_pixel, point, Color.White);
     }
     public void DrawHitbox(SpriteBatch spriteBatch, Quadrilateral rectangle, Color color)
     {
-        rectangle.Offset(Core.Camera.GetDrawingOffset());
-        //if (!CameraManager.IsVisible(rectangle)) return;
+        Quadrilateral box = new(Core.Camera.ApplyDrawingOffset(rectangle.Position), rectangle.BoundingSize * Core.Camera.Zoom);
+        if (!CameraManager.IsVisible(rectangle)) return;
 
-        spriteBatch.Draw(_pixel, new Rectangle((int)rectangle.Left,  (int)rectangle.Top,    (int)rectangle.Width, 1), color);
-        spriteBatch.Draw(_pixel, new Rectangle((int)rectangle.Left,  (int)rectangle.Bottom, (int)rectangle.Width, 1), color);
-        spriteBatch.Draw(_pixel, new Rectangle((int)rectangle.Left,  (int)rectangle.Top,    1, (int)rectangle.Height), color);
-        spriteBatch.Draw(_pixel, new Rectangle((int)rectangle.Right, (int)rectangle.Top,    1, (int)rectangle.Height), color);
+        spriteBatch.Draw(_pixel, new Rectangle((int)box.Left,  (int)box.Top,    (int)box.Width, 1), color);
+        spriteBatch.Draw(_pixel, new Rectangle((int)box.Left,  (int)box.Bottom, (int)box.Width, 1), color);
+        spriteBatch.Draw(_pixel, new Rectangle((int)box.Left,  (int)box.Top,    1, (int)box.Height), color);
+        spriteBatch.Draw(_pixel, new Rectangle((int)box.Right, (int)box.Top,    1, (int)box.Height), color);
     }
 
     public void DrawHitbox(SpriteBatch spriteBatch, Circle circle)
@@ -38,8 +38,8 @@ public class HitboxViewer
         const int segments = 64;
         float angleStep = MathF.Tau / segments;
 
-        Vector2 center = circle.Center + Core.Camera.GetDrawingOffset();
-        float radius = circle.Radius;
+        Vector2 center = Core.Camera.ApplyDrawingOffset(circle.Center);
+        float radius = circle.Radius * Core.Camera.Zoom;
 
         if (!CameraManager.IsVisible(circle)) return;
 
@@ -60,7 +60,7 @@ public class HitboxViewer
 
     public void DrawHitbox(SpriteBatch spriteBatch, RightTriangle triangle, Color color)
     {
-        triangle = new(triangle.RightAngleVertex + Core.Camera.GetDrawingOffset(), triangle.BoundingSize, triangle.Direction);
+        triangle = new(Core.Camera.ApplyDrawingOffset(triangle.RightAngleVertex), triangle.BoundingSize * Core.Camera.Zoom, triangle.Direction);
         if (!CameraManager.IsVisible(triangle)) return;
 
         spriteBatch.Draw(_pixel, new Rectangle((int)triangle.Left, (int)triangle.Bottom, (int)triangle.Width, 1), color);
